@@ -120,7 +120,7 @@ MSBuild version 17.6.3+07e294721 for .NET Framework
 对比`CMakePresets.json`与`CMakeUserPresets.json`发现，当计算机上没有指定环境变量`VCPKG_ROOT`时，使用特定于某个用户的`CMakeUserPresets.json`文件补充了`vcpkg`路径，但是当在`VS Code`中选择了`CMakeUserPresets.json`的`vcpkg-default-user`时，底部的`CMake Tools`状态栏无法选择在`CMakePresets.json`填写的`build presets`，但是在命令行使用cmake相关命令却没有问题。
 
 ### git
-`CMakePresets.json`应该被`git`管理，`CMakeUserPresets.json`应该不被`git`管理，后者只供开发人员用来保存自己的本地生成，但本项目为了知道基本的使用，就一起上传。
+`CMakePresets.json`应该被`git`管理，`CMakeUserPresets.json`应该不被`git`管理，后者只供开发人员用来保存自己的本地生成，但本项目为了知道基本的使用，保存了一份` CMakeUserPresets.json.template`。
 
 ## 与Conan2.0的对比
 > 使用conan一般需要先执行`conan install . -s build_type=Debug --output-folder=cmake-build-debug --build=missing`命令来安装依赖，同时conan会自动生成`CMakePresets.json`在构建目录（`cmake-build-debug`）下，生成`CMakeUserPresets.json`在项目根目录下并同时在文件中 include `CMakePresets.json`
