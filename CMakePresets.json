@@ -1,0 +1,28 @@
+{
+    "version": 4,
+    "configurePresets": [
+        {
+            "name": "vcpkg-default",
+            // "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+            "binaryDir": "${sourceDir}/cmake-build-debug",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                    "type": "FILEPATH"
+                }
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "vcpkg-debug",
+            "configurePreset": "vcpkg-default",
+            "configuration": "Debug"
+        },
+        {
+            "name": "vcpkg-release",
+            "configurePreset": "vcpkg-default",
+            "configuration": "Release"
+        }
+    ]
+}

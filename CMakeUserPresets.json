@@ -1,0 +1,18 @@
+{
+    "version": 4,
+    "include": [
+        "CMakePresets.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "vcpkg-default-user",
+            "inherits": "vcpkg-default",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "C:/CommandLineTools/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                    "type": "FILEPATH"
+                }
+            }
+        }
+    ]
+}
