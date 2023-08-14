@@ -128,7 +128,7 @@ range-v3 provides CMake targets:
 -- Installing: C:/Users/icuxika/VSCodeProjects/vcpkg-cmake-presets/out/install/clang-cl/Release/bin/VcpkgCmakePresets.exe
 ```
 ### CMake Tools 存在的问题
-对比`CMakePresets.json`与`CMakeUserPresets.json`发现，当计算机上没有指定环境变量`VCPKG_ROOT`时，使用特定于某个用户的`CMakeUserPresets.json`文件补充了`vcpkg`路径，但是当在`VS Code`中选择了`CMakeUserPresets.json`的`vcpkg-default-user`时，底部的`CMake Tools`状态栏无法选择在`CMakePresets.json`填写的`build presets`，但是在命令行使用cmake相关命令却没有问题。
+对比`CMakePresets.json`与`CMakeUserPresets.json`发现，当计算机上没有指定环境变量`VCPKG_ROOT`时，使用特定于某个用户的`CMakeUserPresets.json`文件补充了`vcpkg`路径，但是当在`VS Code`中选择了`CMakeUserPresets.json`的`default-user`时，底部的`CMake Tools`状态栏无法选择在`CMakePresets.json`填写的`build presets`，但是在命令行使用cmake相关命令却没有问题，目前项目使用的配置都较为简陋，虽然在底部的`CMake Tools`状态栏无法选择`build presets`，但是默认生成的是`Debug`版本能够满足开发使用，若要获得提示，需要将在`CMakePresets.json`填写的`build presets`复制到`CMakeUserPresets.json`中并更新`configurePreset`相关字段。
 
 ### git
 `CMakePresets.json`应该被`git`管理，`CMakeUserPresets.json`应该不被`git`管理，后者只供开发人员用来保存自己的本地生成，但本项目为了知道基本的使用，保存了一份` CMakeUserPresets.json.template`。
