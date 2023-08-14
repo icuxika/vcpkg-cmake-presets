@@ -5,8 +5,18 @@
     ],
     "configurePresets": [
         {
-            "name": "vcpkg-default-user",
-            "inherits": "vcpkg-default",
+            "name": "default-user",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "C:/CommandLineTools/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                    "type": "FILEPATH"
+                }
+            }
+        },
+        {
+            "name": "clang-cl-user",
+            "inherits": "clang-cl",
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": {
                     "value": "C:/CommandLineTools/vcpkg/scripts/buildsystems/vcpkg.cmake",

@@ -13,3 +13,6 @@ target_link_libraries(${PROJECT_NAME}
     fmt::fmt
     range-v3::range-v3
     cxxopts::cxxopts)
+
+install(TARGETS ${PROJECT_NAME}
+        DESTINATION Release/bin)

@@ -11,9 +11,17 @@ cmake --build --preset <buildPreset-name>
 ```
 
 ## 执行
+### `default`
 ```
-cmake --preset vcpkg-default-user
-cmake --build --preset vcpkg-release
+cmake --preset default-user
+cmake --build --preset default-release
+cmake --build --preset default-release --target install
+```
+### `clang-cl`（依赖Visual Studio提供的命令行环境）
+```
+cmake --preset clang-cl-user
+cmake --build --preset clang-cl-release
+cmake --build --preset clang-cl-release --target install
 ```
 
 ## vcpkg
@@ -27,24 +35,31 @@ git clone https://github.com/microsoft/vcpkg
 
 ## CMakePresets
 ### Power Shell 构建记录
+> 此构建使用随`Visual Studio`安装的`clang-cl`进行构建，需要在`Visual Studio`提供命令行环境中运行，当前使用的是`Windows终端`自动检索到的`Developer PowerShell for VS2022`，若要在`vscode`中开发，需要从此命令行以`code .`打开`vscode`从而能够集成`Visual Studio`的环境
 ```
 >> cmake --list-presets=all .
 Available configure presets:
 
-  "vcpkg-default-user"
-  "vcpkg-default"
+  "default-user"
+  "clang-cl-user"
+  "default"
+  "clang-cl"
 
 Available build presets:
 
-  "vcpkg-debug"
-  "vcpkg-release"
+  "default-debug"
+  "default-release"
+  "clang-cl-debug"
+  "clang-cl-release"
 
->> cmake --preset vcpkg-default-user
+>> cmake --preset clang-cl-user
 Preset CMake variables:
 
+  CMAKE_CXX_COMPILER="clang-cl"
+  CMAKE_C_COMPILER="clang-cl"
+  CMAKE_INSTALL_PREFIX="C:/Users/icuxika/VSCodeProjects/vcpkg-cmake-presets/out/install/clang-cl"
   CMAKE_TOOLCHAIN_FILE:FILEPATH="C:/CommandLineTools/vcpkg/scripts/buildsystems/vcpkg.cmake"
 
--- Building for: Visual Studio 17 2022
 -- Running vcpkg install
 Detecting compiler hash for triplet x64-windows...
 -- Automatically setting HTTP(S)_PROXY environment variables to "127.0.0.1:7890".
@@ -55,18 +70,18 @@ The following packages will be built and installed:
   * vcpkg-cmake:x64-windows -> 2023-05-04
   * vcpkg-cmake-config:x64-windows -> 2022-02-06#1
 Additional packages (*) will be modified to complete this operation.
-Restored 5 package(s) from C:\Users\icuxika\AppData\Local\vcpkg\archives in 137 ms. Use --debug to see more details.
+Restored 5 package(s) from C:\Users\icuxika\AppData\Local\vcpkg\archives in 133 ms. Use --debug to see more details.
 Installing 1/5 vcpkg-cmake-config:x64-windows...
-Elapsed time to handle vcpkg-cmake-config:x64-windows: 2.93 ms
+Elapsed time to handle vcpkg-cmake-config:x64-windows: 2.92 ms
 Installing 2/5 vcpkg-cmake:x64-windows...
-Elapsed time to handle vcpkg-cmake:x64-windows: 3.23 ms
+Elapsed time to handle vcpkg-cmake:x64-windows: 2.97 ms
 Installing 3/5 cxxopts:x64-windows...
-Elapsed time to handle cxxopts:x64-windows: 3.53 ms
+Elapsed time to handle cxxopts:x64-windows: 3.25 ms
 Installing 4/5 fmt:x64-windows...
-Elapsed time to handle fmt:x64-windows: 8.75 ms
+Elapsed time to handle fmt:x64-windows: 7.66 ms
 Installing 5/5 range-v3:x64-windows...
-Elapsed time to handle range-v3:x64-windows: 51 ms
-Total install time: 69.5 ms
+Elapsed time to handle range-v3:x64-windows: 52.2 ms
+Total install time: 69 ms
 cxxopts provides CMake targets:
 
     # this is heuristically generated, and may not be correct
@@ -89,32 +104,28 @@ range-v3 provides CMake targets:
     target_link_libraries(main PRIVATE range-v3::meta range-v3::concepts range-v3::range-v3)
 
 -- Running vcpkg install - done
--- The C compiler identification is MSVC 19.36.32535.0
--- The CXX compiler identification is MSVC 19.36.32535.0
+-- The C compiler identification is Clang 15.0.1 with MSVC-like command-line
+-- The CXX compiler identification is Clang 15.0.1 with MSVC-like command-line
 -- Detecting C compiler ABI info
 -- Detecting C compiler ABI info - done
--- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/cl.exe - skipped
+-- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/bin/clang-cl.exe - skipped
 -- Detecting C compile features
 -- Detecting C compile features - done
 -- Detecting CXX compiler ABI info
 -- Detecting CXX compiler ABI info - done
--- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/cl.exe - skipped
+-- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/Llvm/x64/bin/clang-cl.exe - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Configuring done (6.1s)
+-- Configuring done (15.7s)
 -- Generating done (0.0s)
--- Build files have been written to: C:/Users/icuxika/VSCodeProjects/vcpkg-cmake-presets/cmake-build-debug
+-- Build files have been written to: C:/Users/icuxika/VSCodeProjects/vcpkg-cmake-presets/out/build/clang-cl
 
->> cmake --build --preset vcpkg-release
-MSBuild version 17.6.3+07e294721 for .NET Framework
+>> cmake --build --preset clang-cl-release
+[2/2] Linking CXX executable Release\VcpkgCmakePresets.exe
 
-  1>Checking Build System
-  Building Custom Rule C:/Users/icuxika/VSCodeProjects/vcpkg-cmake-presets/CMakeLists.txt
-  main.cpp
-  VcpkgCmakePresets.vcxproj -> C:\Users\icuxika\VSCodeProjects\vcpkg-cmake-presets\cmake-build-debug\Release\VcpkgCmake
-  Presets.exe
-  Building Custom Rule C:/Users/icuxika/VSCodeProjects/vcpkg-cmake-presets/CMakeLists.txt
->> 
+>> cmake --build --preset clang-cl-release --target install
+[0/1] Install the project...-- Install configuration: "Release"
+-- Installing: C:/Users/icuxika/VSCodeProjects/vcpkg-cmake-presets/out/install/clang-cl/Release/bin/VcpkgCmakePresets.exe
 ```
 ### CMake Tools 存在的问题
 对比`CMakePresets.json`与`CMakeUserPresets.json`发现，当计算机上没有指定环境变量`VCPKG_ROOT`时，使用特定于某个用户的`CMakeUserPresets.json`文件补充了`vcpkg`路径，但是当在`VS Code`中选择了`CMakeUserPresets.json`的`vcpkg-default-user`时，底部的`CMake Tools`状态栏无法选择在`CMakePresets.json`填写的`build presets`，但是在命令行使用cmake相关命令却没有问题。

@@ -2,25 +2,54 @@
     "version": 4,
     "configurePresets": [
         {
-            "name": "vcpkg-default",
-            "binaryDir": "${sourceDir}/cmake-build-debug",
+            "name": "default",
+            "binaryDir": "${sourceDir}/out/build/default",
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": {
                     "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                     "type": "FILEPATH"
-                }
+                },
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/default"
+            }
+        },
+        {
+            "name": "clang-cl",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/out/build/clang-cl",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                    "type": "FILEPATH"
+                },
+                "CMAKE_C_COMPILER": "clang-cl",
+                "CMAKE_CXX_COMPILER": "clang-cl",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/clang-cl"
             }
         }
     ],
     "buildPresets": [
         {
-            "name": "vcpkg-debug",
-            "configurePreset": "vcpkg-default",
+            "name": "default-debug",
+            "configurePreset": "default",
             "configuration": "Debug"
         },
         {
-            "name": "vcpkg-release",
-            "configurePreset": "vcpkg-default",
+            "name": "default-release",
+            "configurePreset": "default",
+            "configuration": "Release"
+        },
+        {
+            "name": "clang-cl-debug",
+            "configurePreset": "clang-cl",
+            "configuration": "Debug"
+        },
+        {
+            "name": "clang-cl-release",
+            "configurePreset": "clang-cl",
             "configuration": "Release"
         }
     ]
