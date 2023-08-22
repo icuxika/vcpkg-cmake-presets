@@ -1,5 +1,4 @@
 .idea
 /cmake-build-*
-.vscode
 CMakeUserPresets.json
 /out

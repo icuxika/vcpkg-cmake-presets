@@ -127,6 +127,67 @@ range-v3 provides CMake targets:
 [0/1] Install the project...-- Install configuration: "Release"
 -- Installing: C:/Users/icuxika/VSCodeProjects/vcpkg-cmake-presets/out/install/clang-cl/Release/bin/VcpkgCmakePresets.exe
 ```
+
+### 使用 MSYS2 作为工具链
+> 主要使用`clang64`环境，`ucrt64`和`mingw64`可以通过修改`CMakePresets.json`对应配置项的`MSYS_SUBSYSTEM`来设置，目前来说`clang64`遇到的问题比较容易解决
+```
+cmake --preset mingw-clang64-user
+cmake --build --preset mingw-clang64-debug-user
+```
+构建好的程序在`MSYS2`环境中可以直接运行，通过`ldd out/build/mingw-clang64-user/Debug/VcpkgCmakePresets.exe`可以得到
+```
+➜  vcpkg-cmake-presets git:(main) ✗ ldd out/build/mingw-clang64-user/Debug/VcpkgCmakePresets.exe
+        ntdll.dll => /c/Windows/SYSTEM32/ntdll.dll (0x7ffc91390000)
+        KERNEL32.DLL => /c/Windows/System32/KERNEL32.DLL (0x7ffc903f0000)
+        KERNELBASE.dll => /c/Windows/System32/KERNELBASE.dll (0x7ffc8e770000)
+        ucrtbase.dll => /c/Windows/System32/ucrtbase.dll (0x7ffc8ef90000)
+        libc++.dll => /clang64/bin/libc++.dll (0x7ffbdf3f0000)
+```
+其中`libc++.dll`所在路径由于没有配置到环境变量中，手动拷贝到 exe 所在目录下后能够在`Windows 终端`正常运行。
+
+通过在`Developer PowerShell for VS2022`环境中运行`dumpbin.exe /dependents .\out\build\mingw-clang64-user\Debug\VcpkgCmakePresets.exe`可以得到
+```
+Dump of file .\out\build\mingw-clang64-user\Debug\VcpkgCmakePresets.exe
+
+File Type: EXECUTABLE IMAGE
+
+  Image has the following dependencies:
+
+    KERNEL32.dll
+    libc++.dll
+    api-ms-win-crt-heap-l1-1-0.dll
+    api-ms-win-crt-private-l1-1-0.dll
+    api-ms-win-crt-runtime-l1-1-0.dll
+    api-ms-win-crt-stdio-l1-1-0.dll
+    api-ms-win-crt-string-l1-1-0.dll
+    api-ms-win-crt-math-l1-1-0.dll
+    api-ms-win-crt-environment-l1-1-0.dll
+    api-ms-win-crt-time-l1-1-0.dll
+    api-ms-win-crt-utility-l1-1-0.dll
+
+  Summary
+
+        1000 .00cfg
+        1000 .buildid
+        1000 .data
+        3000 .debug_abbrev
+        1000 .debug_aranges
+       99000 .debug_info
+       44000 .debug_line
+        5000 .debug_loc
+       12000 .debug_ranges
+      12C000 .debug_str
+        C000 .pdata
+       15000 .rdata
+        1000 .reloc
+       77000 .text
+        1000 .tls
+```
+`ucrt64`和`mingw64`编译出的程序依赖关系相对比较复杂些，如果需要使用，需要仔细处理，目前来看，还是使用`Visual Studio`提供的编译工具使用更为方便
+
+#### 使用MSYS2时进行Debug (由于我没有将MSYS2相关的路径添加到环境变量，所以这些程序都需要根据vscode手动配置，同时也方便切换MSYS2中的不同环境进行测试)
+需要在 `.vscode/settings.json`中指定下`C:/msys64/clang64/bin/gdb.exe`，这个路径取决于使用的MSYS2环境，使用`Visual Studio`提供的编译工具时，Debug不需要此配置，所以目前命名为`settings.json.template`防止生效，使用时要去掉文件后缀
+
 ### CMake Tools 存在的问题
 对比`CMakePresets.json`与`CMakeUserPresets.json`发现，当计算机上没有指定环境变量`VCPKG_ROOT`时，使用特定于某个用户的`CMakeUserPresets.json`文件补充了`vcpkg`路径，但是当在`VS Code`中选择了`CMakeUserPresets.json`的`default-user`时，底部的`CMake Tools`状态栏无法选择在`CMakePresets.json`填写的`build presets`，但是在命令行使用cmake相关命令却没有问题，目前项目使用的配置都较为简陋，虽然在底部的`CMake Tools`状态栏无法选择`build presets`，但是默认生成的是`Debug`版本能够满足开发使用，若要获得提示，需要将在`CMakePresets.json`填写的`build presets`复制到`CMakeUserPresets.json`中并更新`configurePreset`相关字段。
 

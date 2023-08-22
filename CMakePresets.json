@@ -29,6 +29,27 @@
                 "CMAKE_CXX_COMPILER": "clang-cl",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/clang-cl"
             }
+        },
+        {
+            "name": "mingw-clang64",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "environment": {
+                "PATH": "$env{MSYS_PATH}/usr/bin;$env{MSYS_PATH}/$env{MSYS_SUBSYSTEM}/bin;$penv{PATH}"
+            },
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                    "type": "FILEPATH"
+                },
+                "CMAKE_C_COMPILER": "$env{MSYS_PATH}/$env{MSYS_SUBSYSTEM}/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "$env{MSYS_PATH}/$env{MSYS_SUBSYSTEM}/bin/g++.exe",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/mingw-clang64"
+            }
         }
     ],
     "buildPresets": [
