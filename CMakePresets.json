@@ -2,7 +2,15 @@
     "version": 4,
     "configurePresets": [
         {
+            "name": "base",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "1"
+            },
+            "hidden": true
+        },
+        {
             "name": "default",
+            "inherits": "base",
             "binaryDir": "${sourceDir}/out/build/default",
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": {
@@ -14,6 +22,7 @@
         },
         {
             "name": "clang-cl",
+            "inherits": "base",
             "generator": "Ninja Multi-Config",
             "binaryDir": "${sourceDir}/out/build/clang-cl",
             "architecture": {
