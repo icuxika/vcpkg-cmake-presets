@@ -4,6 +4,10 @@
         {
             "name": "base",
             "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                    "type": "FILEPATH"
+                },
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "1"
             },
             "hidden": true
@@ -13,37 +17,42 @@
             "inherits": "base",
             "binaryDir": "${sourceDir}/out/build/default",
             "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": {
-                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-                    "type": "FILEPATH"
-                },
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/default",
-                "CMAKE_CXX_FLAGS": "/utf-8"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/default"
             }
         },
         {
-            "name": "clang-cl",
+            "name": "windows-default",
             "inherits": "base",
-            "generator": "Ninja Multi-Config",
-            "binaryDir": "${sourceDir}/out/build/clang-cl",
+            "binaryDir": "${sourceDir}/out/build/windows-default",
             "architecture": {
                 "value": "x64",
                 "strategy": "external"
             },
             "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": {
-                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-                    "type": "FILEPATH"
-                },
-                "CMAKE_C_COMPILER": "clang-cl",
-                "CMAKE_CXX_COMPILER": "clang-cl",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/clang-cl"
+                "CMAKE_CXX_FLAGS": "/utf-8 /EHsc",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/windows-default"
             }
         },
         {
-            "name": "mingw-clang64",
+            "name": "windows-clang-cl",
+            "inherits": "base",
+            "description": "Ninja generator in Visual Studio Developer PowerShell",
             "generator": "Ninja Multi-Config",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "binaryDir": "${sourceDir}/out/build/windows-clang-cl",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-cl",
+                "CMAKE_CXX_COMPILER": "clang-cl",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/windows-clang-cl"
+            }
+        },
+        {
+            "name": "windows-msys2",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/out/build/windows-msys2",
             "architecture": {
                 "value": "x64",
                 "strategy": "external"
@@ -52,13 +61,9 @@
                 "PATH": "$env{MSYS_PATH}/usr/bin;$env{MSYS_PATH}/$env{MSYS_SUBSYSTEM}/bin;$penv{PATH}"
             },
             "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": {
-                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-                    "type": "FILEPATH"
-                },
                 "CMAKE_C_COMPILER": "$env{MSYS_PATH}/$env{MSYS_SUBSYSTEM}/bin/gcc.exe",
                 "CMAKE_CXX_COMPILER": "$env{MSYS_PATH}/$env{MSYS_SUBSYSTEM}/bin/g++.exe",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/mingw-clang64"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/windows-msys2"
             }
         }
     ],
@@ -74,13 +79,33 @@
             "configuration": "Release"
         },
         {
-            "name": "clang-cl-debug",
-            "configurePreset": "clang-cl",
+            "name": "windows-default-debug",
+            "configurePreset": "windows-default",
             "configuration": "Debug"
         },
         {
-            "name": "clang-cl-release",
-            "configurePreset": "clang-cl",
+            "name": "windows-default-release",
+            "configurePreset": "windows-default",
+            "configuration": "Release"
+        },
+        {
+            "name": "windows-clang-cl-debug",
+            "configurePreset": "windows-clang-cl",
+            "configuration": "Debug"
+        },
+        {
+            "name": "windows-clang-cl-release",
+            "configurePreset": "windows-clang-cl",
+            "configuration": "Release"
+        },
+        {
+            "name": "windows-msys2-debug",
+            "configurePreset": "windows-msys2",
+            "configuration": "Debug"
+        },
+        {
+            "name": "windows-msys2-release",
+            "configurePreset": "windows-msys2",
             "configuration": "Release"
         }
     ]
