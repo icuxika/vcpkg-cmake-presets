@@ -15,15 +15,22 @@
             }
         },
         {
-            "name": "clang-cl-user",
-            "inherits": "clang-cl",
+            "name": "windows-default-user",
+            "inherits": "windows-default",
             "environment": {
                 "VCPKG_ROOT": "C:/CommandLineTools/vcpkg"
             }
         },
         {
-            "name": "mingw-clang64-user",
-            "inherits": "mingw-clang64",
+            "name": "windows-clang-cl-user",
+            "inherits": "windows-clang-cl",
+            "environment": {
+                "VCPKG_ROOT": "C:/CommandLineTools/vcpkg"
+            }
+        },
+        {
+            "name": "windows-msys2-user",
+            "inherits": "windows-msys2",
             "environment": {
                 "VCPKG_ROOT": "C:/CommandLineTools/vcpkg",
                 "MSYS_PATH": "C:/msys64",
@@ -43,19 +50,34 @@
             "configuration": "Release"
         },
         {
-            "name": "clang-cl-debug-user",
-            "configurePreset": "clang-cl-user",
+            "name": "windows-default-debug-user",
+            "configurePreset": "windows-default-user",
             "configuration": "Debug"
         },
         {
-            "name": "clang-cl-release-user",
-            "configurePreset": "clang-cl-user",
+            "name": "windows-default-release-user",
+            "configurePreset": "windows-default-user",
             "configuration": "Release"
         },
         {
-            "name": "mingw-clang64-debug-user",
-            "configurePreset": "mingw-clang64-user",
+            "name": "windows-clang-cl-debug-user",
+            "configurePreset": "windows-clang-cl-user",
             "configuration": "Debug"
+        },
+        {
+            "name": "windows-clang-cl-release-user",
+            "configurePreset": "windows-clang-cl-user",
+            "configuration": "Release"
+        },
+        {
+            "name": "windows-msys2-debug-user",
+            "configurePreset": "windows-msys2-user",
+            "configuration": "Debug"
+        },
+        {
+            "name": "windows-msys2-release-user",
+            "configurePreset": "windows-msys2-user",
+            "configuration": "Release"
         }
     ]
 }
