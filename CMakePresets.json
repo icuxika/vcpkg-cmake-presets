@@ -51,6 +51,7 @@
         },
         {
             "name": "windows-msys2",
+            "inherits": "base",
             "generator": "Ninja Multi-Config",
             "binaryDir": "${sourceDir}/out/build/windows-msys2",
             "architecture": {
