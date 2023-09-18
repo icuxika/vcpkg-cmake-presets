@@ -2,6 +2,7 @@
 
 ## 用户配置（clangd插件会自动检测插件冲突并提示禁用C/C++ Extension Pack部分功能的禁用）
 ```
+"cmake.buildDirectory": "${workspaceFolder}/out/build/windows-clang-cl", // 简单的CMake项目，此目录与clangd.arguments.--compile-commands-dir一致方便clangd插件读取compile_commands.json
 "cmake.exportCompileCommandsFile": true,
 "C_Cpp.intelliSenseEngine": "disabled",
 "C_Cpp.formatting": "disabled",
@@ -37,4 +38,13 @@ Application     clangd.exe                                         0.0.0.0    C:
 
 ```
 
-> 根据 cmake-presets 不同预设构建项目的目录不同，还需要主要注意`clangd.arguments.--compile-commands-dir`的配置更新
+> 根据 cmake-presets 不同预设构建项目的目录不同，还需要主要注意`clangd.arguments.--compile-commands-dir`的配置更新，如果不想通过这个参数来指定`compile_commands.json`，也可以在项目根目录下创建一个软链接到构建目录下的文件
+### Windows
+> PowerShell 管理员模式
+```
+New-Item -ItemType SymbolicLink -Path compile_commands.json -Target .\out\build\windows-clang-cl\compile_commands.json
+```
+### Linux
+```
+ln -s out/build/windows-clang-cl/compile_commands.json .
+```
