@@ -1,0 +1,57 @@
+{
+    "version": 4,
+    "include": [
+        "CMakePresets.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "ubuntu-default",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/out/build/ubuntu-default",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "/home/icuxika/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                    "type": "FILEPATH"
+                },
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/ubuntu-default"
+            }
+        },
+        {
+            "name": "clang",
+            "inherits": "default",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/out/build/clang",
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS": "",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/clang"
+            },
+            "environment": {
+            	"VCPKG_ROOT": "/home/icuxika/vcpkg"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "ubuntu-default-debug",
+            "configurePreset": "ubuntu-default",
+            "configuration": "Debug"
+        },
+        {
+            "name": "ubuntu-default-release",
+            "configurePreset": "ubuntu-default",
+            "configuration": "Release"
+        },
+        {
+            "name": "clang-debug",
+            "configurePreset": "clang",
+            "configuration": "Debug"
+        },
+        {
+            "name": "clang-release",
+            "configurePreset": "clang",
+            "configuration": "Release"
+        }
+    ]
+}
