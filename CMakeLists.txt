@@ -16,3 +16,6 @@ target_link_libraries(${PROJECT_NAME}
 
 install(TARGETS ${PROJECT_NAME}
         DESTINATION Release/bin)
+
+# SingleFilePrograms
+add_executable(singleton SingleFilePrograms/singleton.cpp)
