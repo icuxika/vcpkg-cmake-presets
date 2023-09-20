@@ -7,11 +7,11 @@
 #define LIB_DEMO_DLL_EXPORT
 #endif
 
-class LibDemo {
+class LIB_DEMO_DLL_EXPORT LibDemo {
   private:
 	int PValue;
 
   public:
-	LIB_DEMO_DLL_EXPORT void setValue(int value);
-	LIB_DEMO_DLL_EXPORT int getValue();
+	void setValue(int value);
+	int getValue();
 };
