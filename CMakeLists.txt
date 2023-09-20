@@ -19,3 +19,5 @@ install(TARGETS ${PROJECT_NAME}
 
 # SingleFilePrograms
 add_executable(singleton SingleFilePrograms/singleton.cpp)
+
+add_subdirectory(WrapperLib2C)
