@@ -17,5 +17,6 @@ target_link_libraries(${PROJECT_NAME}
 install(TARGETS ${PROJECT_NAME}
         DESTINATION Release/bin)
 
+add_subdirectory(Algorithms)
 add_subdirectory(SingleFilePrograms)
 add_subdirectory(WrapperLib2C)
