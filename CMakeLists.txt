@@ -17,12 +17,5 @@ target_link_libraries(${PROJECT_NAME}
 install(TARGETS ${PROJECT_NAME}
         DESTINATION Release/bin)
 
-# SingleFilePrograms
-add_executable(singleton SingleFilePrograms/singleton.cpp)
-add_executable(utf8Parse SingleFilePrograms/utf8-parse.cpp)
-target_link_libraries(utf8Parse
-    fmt::fmt-header-only
-    range-v3::range-v3
-    cxxopts::cxxopts)
-
+add_subdirectory(SingleFilePrograms)
 add_subdirectory(WrapperLib2C)
