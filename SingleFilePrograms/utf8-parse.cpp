@@ -3,7 +3,6 @@
 #include <range/v3/iterator/operations.hpp>
 #include <range/v3/view.hpp>
 #include <range/v3/view/chunk_by.hpp>
-#include <xstring>
 
 namespace view = ranges::views;
 

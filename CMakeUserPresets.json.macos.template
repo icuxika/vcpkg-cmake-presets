@@ -1,0 +1,35 @@
+{
+    "version": 4,
+    "include": [
+        "CMakePresets.json"
+    ],
+    "configurePresets": [
+        {
+            "name": "macos-default",
+            "inherits": "default",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/out/build/macos-default",
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS": "",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/macos-default"
+            },
+            "environment": {
+            	"VCPKG_ROOT": "/Users/icuxika/vcpkg"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "macos-default-debug",
+            "configurePreset": "macos-default",
+            "configuration": "Debug"
+        },
+        {
+            "name": "macos-default-release",
+            "configurePreset": "macos-default",
+            "configuration": "Release"
+        }
+    ]
+}

@@ -1,6 +1,5 @@
 #include <functional>
 #include <iostream>
-#include <vcruntime.h>
 #include <vector>
 
 size_t binarySearchArray(const std::vector<int> &vec, int target) {
