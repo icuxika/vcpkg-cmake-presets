@@ -1,0 +1,8 @@
+find_package(Vulkan REQUIRED)
+if(${Vulkan_FOUND})
+    message(STATUS "Found Vulkan")
+    message(STATUS "Vulkan version: ${Vulkan_VERSION}")
+    find_package(glfw3 REQUIRED)
+    add_executable(VulkanWrapper main.cpp)
+    target_link_libraries(VulkanWrapper PRIVATE Vulkan::Vulkan glfw)
+endif(${Vulkan_FOUND})
