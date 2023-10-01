@@ -3,6 +3,7 @@
 #include "swapchain-context.h"
 #include <memory>
 #define GLFW_INCLUDE_VULKAN
+#include "render-process.h"
 #include "swapchain-context.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -44,5 +45,6 @@ class Context {
 	VkQueue PresentQueue;
 	VkDevice Device;
 	std::unique_ptr<SwapChainContext> SwapChain;
+	std::unique_ptr<RenderProcess> RenderProcessContext;
 };
 } // namespace vw

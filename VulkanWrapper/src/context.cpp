@@ -1,4 +1,5 @@
 #include "context.h"
+#include "render-process.h"
 #include "swapchain-context.h"
 #include <_types/_uint32_t.h>
 #include <set>
@@ -16,6 +17,7 @@ const bool isDebug = true;
 namespace vw {
 Context::Context() { std::cout << "[Context create]----------" << std::endl; }
 Context::~Context() {
+	RenderProcessContext.reset();
 	SwapChain.reset();
 	vkDestroySurfaceKHR(Instance, Surface, nullptr);
 	vkDestroyDevice(Device, nullptr);
@@ -41,6 +43,8 @@ void Context::initVkContext(GLFWwindow *window) {
 	// 创建逻辑设备
 	createDevice();
 	SwapChain.reset(new SwapChainContext());
+	RenderProcessContext.reset(new RenderProcess());
+	SwapChain->createFramebuffers();
 };
 
 void Context::createInstance() {

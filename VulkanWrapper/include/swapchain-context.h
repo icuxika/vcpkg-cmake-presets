@@ -16,6 +16,8 @@ class SwapChainContext {
 		std::vector<VkPresentModeKHR> PresentModes;
 	};
 
+	void createFramebuffers();
+
 	VkSwapchainKHR SwapChain;
 	std::vector<VkImage> SwapChainImages;
 	VkFormat SwapChainImageFormat;

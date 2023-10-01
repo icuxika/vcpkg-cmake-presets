@@ -140,9 +140,36 @@ SwapChainContext::SwapChainContext() {
 	}
 }
 SwapChainContext::~SwapChainContext() {
+	for (auto *framebuffer : SwapChainFramebuffers) {
+		vkDestroyFramebuffer(
+			Context::GetInstance().Device, framebuffer, nullptr);
+	}
 	for (auto *imageView : SwapChainImageViews) {
 		vkDestroyImageView(Context::GetInstance().Device, imageView, nullptr);
 	}
 	vkDestroySwapchainKHR(Context::GetInstance().Device, SwapChain, nullptr);
+}
+
+void SwapChainContext::createFramebuffers() {
+	SwapChainFramebuffers.resize(SwapChainImageViews.size());
+
+	for (size_t i = 0; i < SwapChainImageViews.size(); i++) {
+		VkImageView attachments[] = {SwapChainImageViews[i]};
+
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass =
+			Context::GetInstance().RenderProcessContext->RenderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = SwapChainExtent.width;
+		framebufferInfo.height = SwapChainExtent.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(Context::GetInstance().Device, &framebufferInfo,
+				nullptr, &SwapChainFramebuffers[i]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create framebuffer!");
+		}
+	}
 }
 } // namespace vw
