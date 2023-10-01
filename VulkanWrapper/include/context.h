@@ -34,9 +34,11 @@ class Context {
 
 	GLFWwindow *Window;
 	VkInstance Instance;
-	VkPhysicalDevice PhysicalDevice;
-	VkDevice Device;
-	VkQueueFamilyIndices QueueFamilyIndices;
 	VkSurfaceKHR Surface;
+	VkPhysicalDevice PhysicalDevice;
+	VkQueueFamilyIndices QueueFamilyIndices;
+	VkQueue GraphicsQueue;
+	VkQueue PresentQueue;
+	VkDevice Device;
 };
 } // namespace vw

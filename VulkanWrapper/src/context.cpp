@@ -1,4 +1,7 @@
 #include "context.h"
+#include <_types/_uint32_t.h>
+#include <set>
+#include <vector>
 #include <vulkan/vulkan_core.h>
 
 #ifdef NDEBUG
@@ -133,18 +136,27 @@ void Context::findQueueFamilies() {
 }
 
 void Context::createDevice() {
-	VkDeviceQueueCreateInfo deviceQueueCreateInfo{};
-	deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+	std::set<uint32_t> uniqueQueueFamilies = {
+		QueueFamilyIndices.GraphicsFamily.value(),
+		QueueFamilyIndices.PresentFamily.value()};
+
 	float queuePriority = 1.0f;
-	deviceQueueCreateInfo.pQueuePriorities = &queuePriority;
-	deviceQueueCreateInfo.queueCount = 1;
-	deviceQueueCreateInfo.queueFamilyIndex =
-		QueueFamilyIndices.GraphicsFamily.value();
+	for (uint32_t queueFamily : uniqueQueueFamilies) {
+		VkDeviceQueueCreateInfo deviceQueueCreateInfo{};
+		deviceQueueCreateInfo.sType =
+			VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		deviceQueueCreateInfo.queueFamilyIndex = queueFamily;
+		deviceQueueCreateInfo.queueCount = 1;
+		deviceQueueCreateInfo.pQueuePriorities = &queuePriority;
+		queueCreateInfos.push_back(deviceQueueCreateInfo);
+	}
 
 	VkDeviceCreateInfo deviceCreateInfo{};
 	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
-	deviceCreateInfo.queueCreateInfoCount = 1;
+	deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+	deviceCreateInfo.queueCreateInfoCount =
+		static_cast<uint32_t>(queueCreateInfos.size());
 
 	std::vector<const char *> validationLayers = {};
 	if (isDebug) {
@@ -167,5 +179,10 @@ void Context::createDevice() {
 	} else {
 		std::cout << "[Vk Device creation failed]: " << result << std::endl;
 	}
+
+	vkGetDeviceQueue(
+		Device, QueueFamilyIndices.GraphicsFamily.value(), 0, &GraphicsQueue);
+	vkGetDeviceQueue(
+		Device, QueueFamilyIndices.PresentFamily.value(), 0, &PresentQueue);
 }
 } // namespace vw
