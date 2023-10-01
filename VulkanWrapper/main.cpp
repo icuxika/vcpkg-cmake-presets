@@ -22,7 +22,9 @@ int main(int argc, char **argv) {
 	glfwSetKeyCallback(window, keyCallback);
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
+		instance1.RenderContext->drawFrame();
 	}
+	vkDeviceWaitIdle(instance1.Device);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

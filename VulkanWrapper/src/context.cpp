@@ -1,5 +1,6 @@
 #include "context.h"
 #include "render-process.h"
+#include "render.h"
 #include "swapchain-context.h"
 #include <_types/_uint32_t.h>
 #include <set>
@@ -45,6 +46,7 @@ void Context::initVkContext(GLFWwindow *window) {
 	SwapChain.reset(new SwapChainContext());
 	RenderProcessContext.reset(new RenderProcess());
 	SwapChain->createFramebuffers();
+	RenderContext.reset(new Render());
 };
 
 void Context::createInstance() {
