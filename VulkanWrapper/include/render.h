@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -13,13 +14,16 @@ class Render {
 
   private:
 	VkCommandPool CommandPool;
-	VkCommandBuffer CommandBuffer;
-	VkSemaphore ImageAvailableSemaphore;
-	VkSemaphore RenderFinishedSemaphore;
-	VkFence InFlightFence;
+	std::vector<VkCommandBuffer> CommandBuffers;
+	std::vector<VkSemaphore> ImageAvailableSemaphores;
+	std::vector<VkSemaphore> RenderFinishedSemaphores;
+	std::vector<VkFence> InFlightFences;
+
+	const int MaxFramesInFlight = 2;
+	uint32_t CurrentFrame = 0;
 
 	void createCommandPool();
-	void createCommandBuffer();
+	void createCommandBuffers();
 	void createSyncObjects();
 	void recordCommandBuffer(
 		VkCommandBuffer commandBuffer, uint32_t imageIndex);
