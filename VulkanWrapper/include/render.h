@@ -10,10 +10,11 @@ class Render {
 	Render();
 	~Render();
 
+	VkCommandPool CommandPool;
+
 	void drawFrame();
 
   private:
-	VkCommandPool CommandPool;
 	std::vector<VkCommandBuffer> CommandBuffers;
 	std::vector<VkSemaphore> ImageAvailableSemaphores;
 	std::vector<VkSemaphore> RenderFinishedSemaphores;
