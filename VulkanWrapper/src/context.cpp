@@ -1,4 +1,5 @@
 #include "context.h"
+#include "swapchain-context.h"
 #include <_types/_uint32_t.h>
 #include <set>
 #include <vector>
@@ -15,6 +16,7 @@ const bool isDebug = true;
 namespace vw {
 Context::Context() { std::cout << "[Context create]----------" << std::endl; }
 Context::~Context() {
+	SwapChain.reset();
 	vkDestroySurfaceKHR(Instance, Surface, nullptr);
 	vkDestroyDevice(Device, nullptr);
 	vkDestroyInstance(Instance, nullptr);
@@ -38,6 +40,7 @@ void Context::initVkContext(GLFWwindow *window) {
 	findQueueFamilies();
 	// 创建逻辑设备
 	createDevice();
+	SwapChain.reset(new SwapChainContext());
 };
 
 void Context::createInstance() {

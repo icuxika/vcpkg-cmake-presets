@@ -1,6 +1,9 @@
 #pragma once
 
+#include "swapchain-context.h"
+#include <memory>
 #define GLFW_INCLUDE_VULKAN
+#include "swapchain-context.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
 
@@ -40,5 +43,6 @@ class Context {
 	VkQueue GraphicsQueue;
 	VkQueue PresentQueue;
 	VkDevice Device;
+	std::unique_ptr<SwapChainContext> SwapChain;
 };
 } // namespace vw
