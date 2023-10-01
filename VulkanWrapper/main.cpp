@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 		glfwPollEvents();
 		instance1.RenderContext->drawFrame();
 	}
-	vkDeviceWaitIdle(instance1.Device);
+	vkDeviceWaitIdle(instance1.LogicalDevice);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

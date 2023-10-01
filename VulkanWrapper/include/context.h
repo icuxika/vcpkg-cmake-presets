@@ -10,18 +10,6 @@
 
 namespace vw {
 class Context {
-  private:
-	Context();
-	~Context();
-	Context(const Context &) = delete;
-	Context &operator=(const Context &) = delete;
-
-	void createInstance();
-	void createSurface();
-	void pickPhysicalDevices();
-	void findQueueFamilies();
-	void createDevice();
-
   public:
 	static Context &GetInstance();
 	unsigned long long getAddress();
@@ -37,15 +25,28 @@ class Context {
 	void initVkContext(GLFWwindow *window);
 
 	GLFWwindow *Window;
-	VkInstance Instance;
 	VkSurfaceKHR Surface;
 	VkPhysicalDevice PhysicalDevice;
 	VkQueueFamilyIndices QueueFamilyIndices;
 	VkQueue GraphicsQueue;
 	VkQueue PresentQueue;
-	VkDevice Device;
+	VkDevice LogicalDevice;
 	std::unique_ptr<SwapChain> SwapChainContext;
 	std::unique_ptr<RenderProcess> RenderProcessContext;
 	std::unique_ptr<Render> RenderContext;
+
+  private:
+	Context();
+	~Context();
+	Context(const Context &) = delete;
+	Context &operator=(const Context &) = delete;
+
+	VkInstance Instance;
+
+	void createInstance();
+	void createSurface();
+	void pickPhysicalDevices();
+	void findQueueFamilies(VkPhysicalDevice physicalDevice);
+	void createLogicalDevice();
 };
 } // namespace vw

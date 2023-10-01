@@ -10,12 +10,14 @@ RenderProcess::RenderProcess() {
 	createGraphicsPipeline();
 }
 RenderProcess::~RenderProcess() {
-	vkDestroyPipeline(Context::GetInstance().Device, GraphicsPipeline, nullptr);
+	vkDestroyPipeline(
+		Context::GetInstance().LogicalDevice, GraphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(
-		Context::GetInstance().Device, PipelineLayout, nullptr);
+		Context::GetInstance().LogicalDevice, PipelineLayout, nullptr);
 	vkDestroyDescriptorSetLayout(
-		Context::GetInstance().Device, DescriptorSetLayout, nullptr);
-	vkDestroyRenderPass(Context::GetInstance().Device, RenderPass, nullptr);
+		Context::GetInstance().LogicalDevice, DescriptorSetLayout, nullptr);
+	vkDestroyRenderPass(
+		Context::GetInstance().LogicalDevice, RenderPass, nullptr);
 }
 
 void RenderProcess::createRenderPass() {
@@ -56,8 +58,8 @@ void RenderProcess::createRenderPass() {
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
-	if (vkCreateRenderPass(Context::GetInstance().Device, &renderPassInfo,
-			nullptr, &RenderPass) != VK_SUCCESS) {
+	if (vkCreateRenderPass(Context::GetInstance().LogicalDevice,
+			&renderPassInfo, nullptr, &RenderPass) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create render pass!");
 	}
 }
@@ -85,8 +87,8 @@ void RenderProcess::createDescriptorSetLayout() {
 	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 	layoutInfo.pBindings = bindings.data();
 
-	if (vkCreateDescriptorSetLayout(Context::GetInstance().Device, &layoutInfo,
-			nullptr, &DescriptorSetLayout) != VK_SUCCESS) {
+	if (vkCreateDescriptorSetLayout(Context::GetInstance().LogicalDevice,
+			&layoutInfo, nullptr, &DescriptorSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
 }
@@ -179,7 +181,7 @@ void RenderProcess::createGraphicsPipeline() {
 	pipelineLayoutInfo.setLayoutCount = 0;
 	pipelineLayoutInfo.pushConstantRangeCount = 0;
 
-	if (vkCreatePipelineLayout(Context::GetInstance().Device,
+	if (vkCreatePipelineLayout(Context::GetInstance().LogicalDevice,
 			&pipelineLayoutInfo, nullptr, &PipelineLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
@@ -200,8 +202,9 @@ void RenderProcess::createGraphicsPipeline() {
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-	if (vkCreateGraphicsPipelines(Context::GetInstance().Device, VK_NULL_HANDLE,
-			1, &pipelineInfo, nullptr, &GraphicsPipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(Context::GetInstance().LogicalDevice,
+			VK_NULL_HANDLE, 1, &pipelineInfo, nullptr,
+			&GraphicsPipeline) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
 

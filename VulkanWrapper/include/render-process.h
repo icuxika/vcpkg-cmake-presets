@@ -14,11 +14,12 @@ class RenderProcess {
 	~RenderProcess();
 
 	VkRenderPass RenderPass;
-	VkDescriptorSetLayout DescriptorSetLayout;
-	VkPipelineLayout PipelineLayout;
 	VkPipeline GraphicsPipeline;
 
   private:
+	VkDescriptorSetLayout DescriptorSetLayout;
+	VkPipelineLayout PipelineLayout;
+
 	struct Vertex {
 		glm::vec2 Pos;
 		glm::vec3 Color;

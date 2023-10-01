@@ -10,12 +10,14 @@ Render::Render() {
 	createSyncObjects();
 }
 Render::~Render() {
-	vkDestroyFence(Context::GetInstance().Device, InFlightFence, nullptr);
+	vkDestroyFence(
+		Context::GetInstance().LogicalDevice, InFlightFence, nullptr);
 	vkDestroySemaphore(
-		Context::GetInstance().Device, RenderFinishedSemaphore, nullptr);
+		Context::GetInstance().LogicalDevice, RenderFinishedSemaphore, nullptr);
 	vkDestroySemaphore(
-		Context::GetInstance().Device, ImageAvailableSemaphore, nullptr);
-	vkDestroyCommandPool(Context::GetInstance().Device, CommandPool, nullptr);
+		Context::GetInstance().LogicalDevice, ImageAvailableSemaphore, nullptr);
+	vkDestroyCommandPool(
+		Context::GetInstance().LogicalDevice, CommandPool, nullptr);
 }
 
 void Render::createCommandPool() {
@@ -26,8 +28,8 @@ void Render::createCommandPool() {
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	poolInfo.queueFamilyIndex = queueFamilyIndices.GraphicsFamily.value();
 
-	if (vkCreateCommandPool(Context::GetInstance().Device, &poolInfo, nullptr,
-			&CommandPool) != VK_SUCCESS) {
+	if (vkCreateCommandPool(Context::GetInstance().LogicalDevice, &poolInfo,
+			nullptr, &CommandPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics command pool!");
 	}
 }
@@ -39,8 +41,8 @@ void Render::createCommandBuffer() {
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = 1;
 
-	if (vkAllocateCommandBuffers(Context::GetInstance().Device, &allocInfo,
-			&CommandBuffer) != VK_SUCCESS) {
+	if (vkAllocateCommandBuffers(Context::GetInstance().LogicalDevice,
+			&allocInfo, &CommandBuffer) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate command buffers!");
 	}
 }
@@ -53,11 +55,11 @@ void Render::createSyncObjects() {
 	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-	if (vkCreateSemaphore(Context::GetInstance().Device, &semaphoreInfo,
+	if (vkCreateSemaphore(Context::GetInstance().LogicalDevice, &semaphoreInfo,
 			nullptr, &ImageAvailableSemaphore) != VK_SUCCESS ||
-		vkCreateSemaphore(Context::GetInstance().Device, &semaphoreInfo,
+		vkCreateSemaphore(Context::GetInstance().LogicalDevice, &semaphoreInfo,
 			nullptr, &RenderFinishedSemaphore) != VK_SUCCESS ||
-		vkCreateFence(Context::GetInstance().Device, &fenceInfo, nullptr,
+		vkCreateFence(Context::GetInstance().LogicalDevice, &fenceInfo, nullptr,
 			&InFlightFence) != VK_SUCCESS) {
 		throw std::runtime_error(
 			"failed to create synchronization objects for a frame!");
@@ -65,12 +67,12 @@ void Render::createSyncObjects() {
 }
 
 void Render::drawFrame() {
-	vkWaitForFences(
-		Context::GetInstance().Device, 1, &InFlightFence, VK_TRUE, UINT64_MAX);
-	vkResetFences(Context::GetInstance().Device, 1, &InFlightFence);
+	vkWaitForFences(Context::GetInstance().LogicalDevice, 1, &InFlightFence,
+		VK_TRUE, UINT64_MAX);
+	vkResetFences(Context::GetInstance().LogicalDevice, 1, &InFlightFence);
 
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(Context::GetInstance().Device,
+	vkAcquireNextImageKHR(Context::GetInstance().LogicalDevice,
 		Context::GetInstance().SwapChainContext->SwapChainKHR, UINT64_MAX,
 		ImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 

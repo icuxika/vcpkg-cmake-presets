@@ -102,18 +102,19 @@ SwapChain::SwapChain() {
 	createInfo.presentMode = presentMode;
 	createInfo.clipped = VK_TRUE;
 
-	VkResult result = vkCreateSwapchainKHR(
-		Context::GetInstance().Device, &createInfo, nullptr, &SwapChainKHR);
+	VkResult result = vkCreateSwapchainKHR(Context::GetInstance().LogicalDevice,
+		&createInfo, nullptr, &SwapChainKHR);
 	if (result == VK_SUCCESS) {
-		std::cout << "[Vk Swapchain created]" << std::endl;
+		std::cout << "[Vk swapchain created]" << std::endl;
 	} else {
-		std::cout << "[Vk Swapchain creation failed]: " << result << std::endl;
+		std::cout << "[Vk swapchain creation failed]: " << result << std::endl;
+		throw std::runtime_error("failed to create swap chain!");
 	}
 
-	vkGetSwapchainImagesKHR(
-		Context::GetInstance().Device, SwapChainKHR, &imageCount, nullptr);
+	vkGetSwapchainImagesKHR(Context::GetInstance().LogicalDevice, SwapChainKHR,
+		&imageCount, nullptr);
 	SwapChainImages.resize(imageCount);
-	vkGetSwapchainImagesKHR(Context::GetInstance().Device, SwapChainKHR,
+	vkGetSwapchainImagesKHR(Context::GetInstance().LogicalDevice, SwapChainKHR,
 		&imageCount, SwapChainImages.data());
 
 	SwapChainImageFormat = surfaceFormat.format;
@@ -132,22 +133,25 @@ SwapChain::SwapChain() {
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = 1;
 		VkImageView imageView;
-		if (vkCreateImageView(Context::GetInstance().Device, &viewInfo, nullptr,
-				&imageView) != VK_SUCCESS) {
+		if (vkCreateImageView(Context::GetInstance().LogicalDevice, &viewInfo,
+				nullptr, &imageView) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create texture image view!");
 		}
 		SwapChainImageViews[i] = imageView;
 	}
 }
+
 SwapChain::~SwapChain() {
 	for (auto *framebuffer : SwapChainFramebuffers) {
 		vkDestroyFramebuffer(
-			Context::GetInstance().Device, framebuffer, nullptr);
+			Context::GetInstance().LogicalDevice, framebuffer, nullptr);
 	}
 	for (auto *imageView : SwapChainImageViews) {
-		vkDestroyImageView(Context::GetInstance().Device, imageView, nullptr);
+		vkDestroyImageView(
+			Context::GetInstance().LogicalDevice, imageView, nullptr);
 	}
-	vkDestroySwapchainKHR(Context::GetInstance().Device, SwapChainKHR, nullptr);
+	vkDestroySwapchainKHR(
+		Context::GetInstance().LogicalDevice, SwapChainKHR, nullptr);
 }
 
 void SwapChain::createFramebuffers() {
@@ -166,8 +170,9 @@ void SwapChain::createFramebuffers() {
 		framebufferInfo.height = SwapChainExtent.height;
 		framebufferInfo.layers = 1;
 
-		if (vkCreateFramebuffer(Context::GetInstance().Device, &framebufferInfo,
-				nullptr, &SwapChainFramebuffers[i]) != VK_SUCCESS) {
+		if (vkCreateFramebuffer(Context::GetInstance().LogicalDevice,
+				&framebufferInfo, nullptr,
+				&SwapChainFramebuffers[i]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create framebuffer!");
 		}
 	}

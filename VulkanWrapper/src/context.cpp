@@ -21,7 +21,7 @@ Context::~Context() {
 	RenderProcessContext.reset();
 	SwapChainContext.reset();
 	vkDestroySurfaceKHR(Instance, Surface, nullptr);
-	vkDestroyDevice(Device, nullptr);
+	vkDestroyDevice(LogicalDevice, nullptr);
 	vkDestroyInstance(Instance, nullptr);
 	std::cout << "[Context destroy]" << std::endl;
 }
@@ -40,9 +40,9 @@ void Context::initVkContext(GLFWwindow *window) {
 	// 查询物理设备
 	pickPhysicalDevices();
 	// 找到支持图形操作的队列
-	findQueueFamilies();
+	findQueueFamilies(PhysicalDevice);
 	// 创建逻辑设备
-	createDevice();
+	createLogicalDevice();
 	SwapChainContext.reset(new SwapChain());
 	RenderProcessContext.reset(new RenderProcess());
 	SwapChainContext->createFramebuffers();
@@ -86,9 +86,10 @@ void Context::createInstance() {
 
 	VkResult result = vkCreateInstance(&createInfo, nullptr, &Instance);
 	if (result == VK_SUCCESS) {
-		std::cout << "[Vk Instance created]" << std::endl;
+		std::cout << "[Vk instance created]" << std::endl;
 	} else {
-		std::cout << "[Vk Instance creation failed]: " << result << std::endl;
+		std::cout << "[Vk instance creation failed]: " << result << std::endl;
+		throw std::runtime_error("failed to create instance!");
 	}
 }
 
@@ -96,9 +97,10 @@ void Context::createSurface() {
 	VkResult result =
 		glfwCreateWindowSurface(Instance, Window, nullptr, &Surface);
 	if (result == VK_SUCCESS) {
-		std::cout << "[Vk Surface created]" << std::endl;
+		std::cout << "[Vk surface created]" << std::endl;
 	} else {
-		std::cout << "[Vk Surface creation failed]: " << result << std::endl;
+		std::cout << "[Vk surface creation failed]: " << result << std::endl;
+		throw std::runtime_error("failed to create window surface!");
 	}
 }
 
@@ -113,11 +115,11 @@ void Context::pickPhysicalDevices() {
 	PhysicalDevice = devices[0];
 	VkPhysicalDeviceProperties pProperties;
 	vkGetPhysicalDeviceProperties(PhysicalDevice, &pProperties);
-	std::cout << "Vk PhysicalDevice name: " << pProperties.deviceName
+	std::cout << "Vk physical device name: " << pProperties.deviceName
 			  << std::endl;
 }
 
-void Context::findQueueFamilies() {
+void Context::findQueueFamilies(VkPhysicalDevice physicalDevice) {
 	uint32_t queueFamilyCount = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(
 		PhysicalDevice, &queueFamilyCount, nullptr);
@@ -144,7 +146,7 @@ void Context::findQueueFamilies() {
 	}
 }
 
-void Context::createDevice() {
+void Context::createLogicalDevice() {
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	std::set<uint32_t> uniqueQueueFamilies = {
 		QueueFamilyIndices.GraphicsFamily.value(),
@@ -181,17 +183,19 @@ void Context::createDevice() {
 		static_cast<uint32_t>(extensions.size());
 	deviceCreateInfo.ppEnabledExtensionNames = extensions.data();
 
-	VkResult result =
-		vkCreateDevice(PhysicalDevice, &deviceCreateInfo, nullptr, &Device);
+	VkResult result = vkCreateDevice(
+		PhysicalDevice, &deviceCreateInfo, nullptr, &LogicalDevice);
 	if (result == VK_SUCCESS) {
-		std::cout << "[Vk Device created]" << std::endl;
+		std::cout << "[Vk logical device created]" << std::endl;
 	} else {
-		std::cout << "[Vk Device creation failed]: " << result << std::endl;
+		std::cout << "[Vk logical device creation failed]: " << result
+				  << std::endl;
+		throw std::runtime_error("failed to create logical device!");
 	}
 
-	vkGetDeviceQueue(
-		Device, QueueFamilyIndices.GraphicsFamily.value(), 0, &GraphicsQueue);
-	vkGetDeviceQueue(
-		Device, QueueFamilyIndices.PresentFamily.value(), 0, &PresentQueue);
+	vkGetDeviceQueue(LogicalDevice, QueueFamilyIndices.GraphicsFamily.value(),
+		0, &GraphicsQueue);
+	vkGetDeviceQueue(LogicalDevice, QueueFamilyIndices.PresentFamily.value(), 0,
+		&PresentQueue);
 }
 } // namespace vw

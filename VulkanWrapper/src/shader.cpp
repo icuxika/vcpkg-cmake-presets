@@ -19,9 +19,9 @@ void Shader::initShader() {
 
 void Shader::destroyShaderModule() {
 	vkDestroyShaderModule(
-		Context::GetInstance().Device, VertShaderModule, nullptr);
+		Context::GetInstance().LogicalDevice, VertShaderModule, nullptr);
 	vkDestroyShaderModule(
-		Context::GetInstance().Device, FragShaderModule, nullptr);
+		Context::GetInstance().LogicalDevice, FragShaderModule, nullptr);
 }
 
 void Shader::createShader(const std::vector<char> &vertShaderCode,
@@ -37,7 +37,7 @@ VkShaderModule Shader::createShaderModule(const std::vector<char> &code) {
 	createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
 	VkShaderModule shaderModule;
-	if (vkCreateShaderModule(Context::GetInstance().Device, &createInfo,
+	if (vkCreateShaderModule(Context::GetInstance().LogicalDevice, &createInfo,
 			nullptr, &shaderModule) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create shader module!");
 	}

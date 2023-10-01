@@ -8,6 +8,13 @@
 
 namespace vw {
 class Shader {
+  public:
+	static Shader &GetInstance();
+	void initShader();
+	void destroyShaderModule();
+	VkShaderModule VertShaderModule;
+	VkShaderModule FragShaderModule;
+
   private:
 	Shader();
 	~Shader();
@@ -18,12 +25,5 @@ class Shader {
 		const std::vector<char> &fragShaderCode);
 	VkShaderModule createShaderModule(const std::vector<char> &code);
 	std::vector<char> readFile(const std::string &filename);
-
-  public:
-	static Shader &GetInstance();
-	void initShader();
-	void destroyShaderModule();
-	VkShaderModule VertShaderModule;
-	VkShaderModule FragShaderModule;
 };
 } // namespace vw

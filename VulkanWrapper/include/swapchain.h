@@ -24,5 +24,7 @@ class SwapChain {
 	VkExtent2D SwapChainExtent;
 	std::vector<VkImageView> SwapChainImageViews;
 	std::vector<VkFramebuffer> SwapChainFramebuffers;
+
+  private:
 };
 } // namespace vw
