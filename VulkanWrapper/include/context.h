@@ -1,11 +1,10 @@
 #pragma once
 
 #include "render.h"
-#include "swapchain-context.h"
+#include "swapchain.h"
 #include <memory>
 #define GLFW_INCLUDE_VULKAN
 #include "render-process.h"
-#include "swapchain-context.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
 
@@ -45,7 +44,7 @@ class Context {
 	VkQueue GraphicsQueue;
 	VkQueue PresentQueue;
 	VkDevice Device;
-	std::unique_ptr<SwapChainContext> SwapChain;
+	std::unique_ptr<SwapChain> SwapChainContext;
 	std::unique_ptr<RenderProcess> RenderProcessContext;
 	std::unique_ptr<Render> RenderContext;
 };

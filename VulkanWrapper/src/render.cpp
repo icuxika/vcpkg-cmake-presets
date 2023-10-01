@@ -71,7 +71,7 @@ void Render::drawFrame() {
 
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(Context::GetInstance().Device,
-		Context::GetInstance().SwapChain->SwapChain, UINT64_MAX,
+		Context::GetInstance().SwapChainContext->SwapChainKHR, UINT64_MAX,
 		ImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
 	vkResetCommandBuffer(CommandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
@@ -105,7 +105,8 @@ void Render::drawFrame() {
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
 
-	VkSwapchainKHR swapChains[] = {Context::GetInstance().SwapChain->SwapChain};
+	VkSwapchainKHR swapChains[] = {
+		Context::GetInstance().SwapChainContext->SwapChainKHR};
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
 
@@ -128,10 +129,11 @@ void Render::recordCommandBuffer(
 	renderPassInfo.renderPass =
 		Context::GetInstance().RenderProcessContext->RenderPass;
 	renderPassInfo.framebuffer =
-		Context::GetInstance().SwapChain->SwapChainFramebuffers[imageIndex];
+		Context::GetInstance()
+			.SwapChainContext->SwapChainFramebuffers[imageIndex];
 	renderPassInfo.renderArea.offset = {0, 0};
 	renderPassInfo.renderArea.extent =
-		Context::GetInstance().SwapChain->SwapChainExtent;
+		Context::GetInstance().SwapChainContext->SwapChainExtent;
 
 	VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
 	renderPassInfo.clearValueCount = 1;
@@ -147,16 +149,16 @@ void Render::recordCommandBuffer(
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
 	viewport.width =
-		(float)Context::GetInstance().SwapChain->SwapChainExtent.width;
+		(float)Context::GetInstance().SwapChainContext->SwapChainExtent.width;
 	viewport.height =
-		(float)Context::GetInstance().SwapChain->SwapChainExtent.height;
+		(float)Context::GetInstance().SwapChainContext->SwapChainExtent.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
 	VkRect2D scissor{};
 	scissor.offset = {0, 0};
-	scissor.extent = Context::GetInstance().SwapChain->SwapChainExtent;
+	scissor.extent = Context::GetInstance().SwapChainContext->SwapChainExtent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	vkCmdDraw(commandBuffer, 3, 1, 0, 0);

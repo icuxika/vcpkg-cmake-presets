@@ -5,10 +5,10 @@
 #include <iostream>
 
 namespace vw {
-class SwapChainContext {
+class SwapChain {
   public:
-	SwapChainContext();
-	~SwapChainContext();
+	SwapChain();
+	~SwapChain();
 
 	struct SwapChainSupportDetails {
 		VkSurfaceCapabilitiesKHR Capabilities;
@@ -18,7 +18,7 @@ class SwapChainContext {
 
 	void createFramebuffers();
 
-	VkSwapchainKHR SwapChain;
+	VkSwapchainKHR SwapChainKHR;
 	std::vector<VkImage> SwapChainImages;
 	VkFormat SwapChainImageFormat;
 	VkExtent2D SwapChainExtent;

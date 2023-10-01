@@ -1,9 +1,9 @@
-#include "swapchain-context.h"
+#include "swapchain.h"
 #include "context.h"
 #include <vulkan/vulkan_core.h>
 
 namespace vw {
-SwapChainContext::SwapChainContext() {
+SwapChain::SwapChain() {
 	SwapChainSupportDetails swapChainSupportDetails;
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
 		Context::GetInstance().PhysicalDevice, Context::GetInstance().Surface,
@@ -103,7 +103,7 @@ SwapChainContext::SwapChainContext() {
 	createInfo.clipped = VK_TRUE;
 
 	VkResult result = vkCreateSwapchainKHR(
-		Context::GetInstance().Device, &createInfo, nullptr, &SwapChain);
+		Context::GetInstance().Device, &createInfo, nullptr, &SwapChainKHR);
 	if (result == VK_SUCCESS) {
 		std::cout << "[Vk Swapchain created]" << std::endl;
 	} else {
@@ -111,9 +111,9 @@ SwapChainContext::SwapChainContext() {
 	}
 
 	vkGetSwapchainImagesKHR(
-		Context::GetInstance().Device, SwapChain, &imageCount, nullptr);
+		Context::GetInstance().Device, SwapChainKHR, &imageCount, nullptr);
 	SwapChainImages.resize(imageCount);
-	vkGetSwapchainImagesKHR(Context::GetInstance().Device, SwapChain,
+	vkGetSwapchainImagesKHR(Context::GetInstance().Device, SwapChainKHR,
 		&imageCount, SwapChainImages.data());
 
 	SwapChainImageFormat = surfaceFormat.format;
@@ -139,7 +139,7 @@ SwapChainContext::SwapChainContext() {
 		SwapChainImageViews[i] = imageView;
 	}
 }
-SwapChainContext::~SwapChainContext() {
+SwapChain::~SwapChain() {
 	for (auto *framebuffer : SwapChainFramebuffers) {
 		vkDestroyFramebuffer(
 			Context::GetInstance().Device, framebuffer, nullptr);
@@ -147,10 +147,10 @@ SwapChainContext::~SwapChainContext() {
 	for (auto *imageView : SwapChainImageViews) {
 		vkDestroyImageView(Context::GetInstance().Device, imageView, nullptr);
 	}
-	vkDestroySwapchainKHR(Context::GetInstance().Device, SwapChain, nullptr);
+	vkDestroySwapchainKHR(Context::GetInstance().Device, SwapChainKHR, nullptr);
 }
 
-void SwapChainContext::createFramebuffers() {
+void SwapChain::createFramebuffers() {
 	SwapChainFramebuffers.resize(SwapChainImageViews.size());
 
 	for (size_t i = 0; i < SwapChainImageViews.size(); i++) {

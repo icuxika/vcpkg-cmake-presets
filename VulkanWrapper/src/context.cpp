@@ -1,7 +1,7 @@
 #include "context.h"
 #include "render-process.h"
 #include "render.h"
-#include "swapchain-context.h"
+#include "swapchain.h"
 #include <_types/_uint32_t.h>
 #include <set>
 #include <vector>
@@ -19,7 +19,7 @@ namespace vw {
 Context::Context() { std::cout << "[Context create]----------" << std::endl; }
 Context::~Context() {
 	RenderProcessContext.reset();
-	SwapChain.reset();
+	SwapChainContext.reset();
 	vkDestroySurfaceKHR(Instance, Surface, nullptr);
 	vkDestroyDevice(Device, nullptr);
 	vkDestroyInstance(Instance, nullptr);
@@ -43,9 +43,9 @@ void Context::initVkContext(GLFWwindow *window) {
 	findQueueFamilies();
 	// 创建逻辑设备
 	createDevice();
-	SwapChain.reset(new SwapChainContext());
+	SwapChainContext.reset(new SwapChain());
 	RenderProcessContext.reset(new RenderProcess());
-	SwapChain->createFramebuffers();
+	SwapChainContext->createFramebuffers();
 	RenderContext.reset(new Render());
 };
 
