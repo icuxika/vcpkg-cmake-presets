@@ -1,4 +1,5 @@
 #include "context.h"
+#include "buffer.h"
 #include "render-process.h"
 #include "render.h"
 #include "swapchain.h"
@@ -19,6 +20,7 @@ namespace vw {
 Context::Context() { std::cout << "[Context create]----------" << std::endl; }
 Context::~Context() {
 	RenderProcessContext.reset();
+	BufferContext.reset();
 	SwapChainContext.reset();
 	vkDestroySurfaceKHR(Instance, Surface, nullptr);
 	vkDestroyDevice(LogicalDevice, nullptr);
@@ -46,6 +48,7 @@ void Context::initVkContext(GLFWwindow *window) {
 	SwapChainContext.reset(new SwapChain());
 	RenderProcessContext.reset(new RenderProcess());
 	SwapChainContext->createFramebuffers();
+	BufferContext.reset(new Buffer());
 	RenderContext.reset(new Render());
 };
 

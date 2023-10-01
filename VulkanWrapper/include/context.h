@@ -1,5 +1,6 @@
 #pragma once
 
+#include "buffer.h"
 #include "render.h"
 #include "swapchain.h"
 #include <memory>
@@ -33,6 +34,7 @@ class Context {
 	VkDevice LogicalDevice;
 	std::unique_ptr<SwapChain> SwapChainContext;
 	std::unique_ptr<RenderProcess> RenderProcessContext;
+	std::unique_ptr<Buffer> BufferContext;
 	std::unique_ptr<Render> RenderContext;
 
   private:
