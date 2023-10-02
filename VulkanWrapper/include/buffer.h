@@ -43,6 +43,12 @@ struct Vertex {
 	}
 };
 
+struct UniformBufferObject {
+	alignas(16) glm::mat4 Model;
+	alignas(16) glm::mat4 View;
+	alignas(16) glm::mat4 Proj;
+};
+
 class Buffer {
   public:
 	Buffer();
@@ -50,15 +56,22 @@ class Buffer {
 
 	VkBuffer VertexBuffer;
 	VkBuffer IndexBuffer;
+	std::vector<VkBuffer> UniformBuffers;
+	std::vector<void *> UniformBuffersMapped;
 
 	void createVertexBuffer();
 	void createIndexBuffer();
+	void createUniformBuffers();
 
 	const std::vector<uint16_t> Indices = {0, 1, 2, 2, 3, 0};
 
   private:
 	VkDeviceMemory VertexBufferMemory;
 	VkDeviceMemory IndexBufferMemory;
+	std::vector<VkDeviceMemory> UniformBuffersMemory;
+	VkDescriptorPool DescriptorPool;
+	std::vector<VkDescriptorSet> DescriptorSets;
+	std::vector<VkCommandBuffer> CommandBuffers;
 
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
 		VkMemoryPropertyFlags properties, VkBuffer &buffer,

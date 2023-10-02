@@ -5,11 +5,14 @@
 #include <vulkan/vulkan_core.h>
 
 namespace vw {
-Buffer::Buffer() {
-	createVertexBuffer();
-	createIndexBuffer();
-}
+Buffer::Buffer() {}
 Buffer::~Buffer() {
+	for (size_t i = 0; i < Context::GetInstance().MaxFramesInFlight; i++) {
+		vkDestroyBuffer(
+			Context::GetInstance().LogicalDevice, UniformBuffers[i], nullptr);
+		vkFreeMemory(Context::GetInstance().LogicalDevice,
+			UniformBuffersMemory[i], nullptr);
+	}
 	vkFreeMemory(
 		Context::GetInstance().LogicalDevice, IndexBufferMemory, nullptr);
 	vkDestroyBuffer(Context::GetInstance().LogicalDevice, IndexBuffer, nullptr);
@@ -45,6 +48,7 @@ void Buffer::createVertexBuffer() {
 		Context::GetInstance().LogicalDevice, stagingBuffer, nullptr);
 	vkFreeMemory(
 		Context::GetInstance().LogicalDevice, stagingBufferMemory, nullptr);
+	std::cout << "[Vk vertex buffer created]" << std::endl;
 }
 
 void Buffer::createIndexBuffer() {
@@ -73,6 +77,27 @@ void Buffer::createIndexBuffer() {
 		Context::GetInstance().LogicalDevice, stagingBuffer, nullptr);
 	vkFreeMemory(
 		Context::GetInstance().LogicalDevice, stagingBufferMemory, nullptr);
+	std::cout << "[Vk index buffer created]" << std::endl;
+}
+
+void Buffer::createUniformBuffers() {
+	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+	UniformBuffers.resize(Context::GetInstance().MaxFramesInFlight);
+	UniformBuffersMemory.resize(Context::GetInstance().MaxFramesInFlight);
+	UniformBuffersMapped.resize(Context::GetInstance().MaxFramesInFlight);
+
+	for (size_t i = 0; i < Context::GetInstance().MaxFramesInFlight; i++) {
+		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			UniformBuffers[i], UniformBuffersMemory[i]);
+
+		vkMapMemory(Context::GetInstance().LogicalDevice,
+			UniformBuffersMemory[i], 0, bufferSize, 0,
+			&UniformBuffersMapped[i]);
+	}
+	std::cout << "[Vk uniform buffers created]" << std::endl;
 }
 
 void Buffer::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,

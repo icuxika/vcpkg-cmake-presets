@@ -15,14 +15,18 @@ class RenderProcess {
 	~RenderProcess();
 
 	VkRenderPass RenderPass;
-	VkPipeline GraphicsPipeline;
-
-  private:
-	VkDescriptorSetLayout DescriptorSetLayout;
 	VkPipelineLayout PipelineLayout;
+	VkPipeline GraphicsPipeline;
+	std::vector<VkDescriptorSet> DescriptorSets;
 
 	void createRenderPass();
 	void createDescriptorSetLayout();
 	void createGraphicsPipeline();
+	void createDescriptorPool();
+	void createDescriptorSets();
+
+  private:
+	VkDescriptorSetLayout DescriptorSetLayout;
+	VkDescriptorPool DescriptorPool;
 };
 } // namespace vw

@@ -7,4 +7,7 @@ if(${Vulkan_FOUND})
     add_executable(VulkanWrapper main.cpp src/context.cpp src/swapchain.cpp src/shader.cpp src/render-process.cpp src/render.cpp src/buffer.cpp)
     target_link_libraries(VulkanWrapper PRIVATE Vulkan::Vulkan glfw glm)
     target_include_directories(VulkanWrapper PUBLIC include)
+
+    add_executable(VulkanDemo demo.cpp)
+    target_link_libraries(VulkanDemo PRIVATE Vulkan::Vulkan glfw glm)
 endif(${Vulkan_FOUND})

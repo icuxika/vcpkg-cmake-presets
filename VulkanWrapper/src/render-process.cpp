@@ -4,12 +4,10 @@
 #include <vulkan/vulkan_core.h>
 
 namespace vw {
-RenderProcess::RenderProcess() {
-	createRenderPass();
-	createDescriptorSetLayout();
-	createGraphicsPipeline();
-}
+RenderProcess::RenderProcess() {}
 RenderProcess::~RenderProcess() {
+	vkDestroyDescriptorPool(
+		Context::GetInstance().LogicalDevice, DescriptorPool, nullptr);
 	vkDestroyPipeline(
 		Context::GetInstance().LogicalDevice, GraphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(
@@ -62,6 +60,15 @@ void RenderProcess::createRenderPass() {
 			&renderPassInfo, nullptr, &RenderPass) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create render pass!");
 	}
+	VkResult result = vkCreateRenderPass(Context::GetInstance().LogicalDevice,
+		&renderPassInfo, nullptr, &RenderPass);
+	if (result == VK_SUCCESS) {
+		std::cout << "[Vk render pass created]" << std::endl;
+	} else {
+		std::cout << "[Vk render pass creation failed]: " << result
+				  << std::endl;
+		throw std::runtime_error("failed to create render pass!");
+	}
 }
 
 void RenderProcess::createDescriptorSetLayout() {
@@ -72,23 +79,20 @@ void RenderProcess::createDescriptorSetLayout() {
 	uboLayoutBinding.pImmutableSamplers = nullptr;
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType =
-		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	std::array<VkDescriptorSetLayoutBinding, 2> bindings = {
-		uboLayoutBinding, samplerLayoutBinding};
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	layoutInfo.pBindings = bindings.data();
+	layoutInfo.bindingCount = 1;
+	layoutInfo.pBindings = &uboLayoutBinding;
 
-	if (vkCreateDescriptorSetLayout(Context::GetInstance().LogicalDevice,
-			&layoutInfo, nullptr, &DescriptorSetLayout) != VK_SUCCESS) {
+	VkResult result =
+		vkCreateDescriptorSetLayout(Context::GetInstance().LogicalDevice,
+			&layoutInfo, nullptr, &DescriptorSetLayout);
+	if (result == VK_SUCCESS) {
+		std::cout << "[Vk descriptor set layout created]: "
+				  << DescriptorSetLayout << std::endl;
+	} else {
+		std::cout << "[Vk descriptor set layout creation failed]: " << result
+				  << std::endl;
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
 }
@@ -119,8 +123,10 @@ void RenderProcess::createGraphicsPipeline() {
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType =
 		VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
 	auto bindingDescription = Vertex::GetBindingDescription();
 	auto attributeDescriptions = Vertex::GetAttributeDescriptions();
+
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
 	vertexInputInfo.vertexAttributeDescriptionCount =
 		static_cast<uint32_t>(attributeDescriptions.size());
@@ -146,7 +152,7 @@ void RenderProcess::createGraphicsPipeline() {
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
 
 	VkPipelineMultisampleStateCreateInfo multisampling{};
@@ -183,11 +189,18 @@ void RenderProcess::createGraphicsPipeline() {
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0;
-	pipelineLayoutInfo.pushConstantRangeCount = 0;
+	pipelineLayoutInfo.setLayoutCount = 1;
+	pipelineLayoutInfo.pSetLayouts = &DescriptorSetLayout;
 
-	if (vkCreatePipelineLayout(Context::GetInstance().LogicalDevice,
-			&pipelineLayoutInfo, nullptr, &PipelineLayout) != VK_SUCCESS) {
+	VkResult result =
+		vkCreatePipelineLayout(Context::GetInstance().LogicalDevice,
+			&pipelineLayoutInfo, nullptr, &PipelineLayout);
+	if (result == VK_SUCCESS) {
+		std::cout << "[Vk pipeline layout created]: " << PipelineLayout
+				  << std::endl;
+	} else {
+		std::cout << "[Vk pipeline layout creation failed]: " << result
+				  << std::endl;
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
 
@@ -207,12 +220,85 @@ void RenderProcess::createGraphicsPipeline() {
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-	if (vkCreateGraphicsPipelines(Context::GetInstance().LogicalDevice,
-			VK_NULL_HANDLE, 1, &pipelineInfo, nullptr,
-			&GraphicsPipeline) != VK_SUCCESS) {
+	result = vkCreateGraphicsPipelines(Context::GetInstance().LogicalDevice,
+		VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &GraphicsPipeline);
+	if (result == VK_SUCCESS) {
+		std::cout << "[Vk graphics pipeline created]: " << GraphicsPipeline
+				  << std::endl;
+	} else {
+		std::cout << "[Vk graphics pipeline creation failed]: " << result
+				  << std::endl;
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
 
 	Shader::GetInstance().destroyShaderModule();
+}
+
+void RenderProcess::createDescriptorPool() {
+	VkDescriptorPoolSize poolSize{};
+	poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSize.descriptorCount =
+		static_cast<uint32_t>(Context::GetInstance().MaxFramesInFlight);
+
+	VkDescriptorPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.poolSizeCount = 1;
+	poolInfo.pPoolSizes = &poolSize;
+	poolInfo.maxSets =
+		static_cast<uint32_t>(Context::GetInstance().MaxFramesInFlight);
+
+	VkResult result =
+		vkCreateDescriptorPool(Context::GetInstance().LogicalDevice, &poolInfo,
+			nullptr, &DescriptorPool);
+	if (result == VK_SUCCESS) {
+		std::cout << "[Vk descriptor pool created]" << std::endl;
+	} else {
+		std::cout << "[Vk descriptor pool creation failed]: " << result
+				  << std::endl;
+		throw std::runtime_error("failed to create descriptor pool!");
+	}
+}
+
+void RenderProcess::createDescriptorSets() {
+	std::vector<VkDescriptorSetLayout> layouts(
+		Context::GetInstance().MaxFramesInFlight, DescriptorSetLayout);
+	VkDescriptorSetAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = DescriptorPool;
+	allocInfo.descriptorSetCount =
+		static_cast<uint32_t>(Context::GetInstance().MaxFramesInFlight);
+	allocInfo.pSetLayouts = layouts.data();
+
+	DescriptorSets.resize(Context::GetInstance().MaxFramesInFlight);
+	VkResult result =
+		vkAllocateDescriptorSets(Context::GetInstance().LogicalDevice,
+			&allocInfo, DescriptorSets.data());
+	if (result == VK_SUCCESS) {
+		std::cout << "[Vk descriptor sets allocated]" << std::endl;
+	} else {
+		std::cout << "[Vk descriptor sets allocation failed]: " << result
+				  << std::endl;
+		throw std::runtime_error("failed to allocate descriptor sets!");
+	}
+
+	for (size_t i = 0; i < Context::GetInstance().MaxFramesInFlight; i++) {
+		VkDescriptorBufferInfo bufferInfo{};
+		bufferInfo.buffer =
+			Context::GetInstance().BufferContext->UniformBuffers[i];
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(UniformBufferObject);
+
+		VkWriteDescriptorSet descriptorWrite{};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = DescriptorSets[i];
+		descriptorWrite.dstBinding = 0;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pBufferInfo = &bufferInfo;
+
+		vkUpdateDescriptorSets(Context::GetInstance().LogicalDevice, 1,
+			&descriptorWrite, 0, nullptr);
+	}
 }
 } // namespace vw

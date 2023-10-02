@@ -3,6 +3,7 @@
 #include <vector>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <chrono>
 
 namespace vw {
 class Render {
@@ -12,6 +13,9 @@ class Render {
 
 	VkCommandPool CommandPool;
 
+	void createCommandPool();
+	void createCommandBuffers();
+	void createSyncObjects();
 	void drawFrame();
 
   private:
@@ -20,13 +24,10 @@ class Render {
 	std::vector<VkSemaphore> RenderFinishedSemaphores;
 	std::vector<VkFence> InFlightFences;
 
-	const int MaxFramesInFlight = 2;
 	uint32_t CurrentFrame = 0;
 
-	void createCommandPool();
-	void createCommandBuffers();
-	void createSyncObjects();
 	void recordCommandBuffer(
 		VkCommandBuffer commandBuffer, uint32_t imageIndex);
+	void updateUniformBuffer(uint32_t currentImage);
 };
 } // namespace vw

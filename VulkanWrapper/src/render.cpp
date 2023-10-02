@@ -4,13 +4,9 @@
 #include <vulkan/vulkan_core.h>
 
 namespace vw {
-Render::Render() {
-	createCommandPool();
-	createCommandBuffers();
-	createSyncObjects();
-}
+Render::Render() {}
 Render::~Render() {
-	for (size_t i = 0; i < MaxFramesInFlight; i++) {
+	for (size_t i = 0; i < Context::GetInstance().MaxFramesInFlight; i++) {
 		vkDestroySemaphore(Context::GetInstance().LogicalDevice,
 			RenderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(Context::GetInstance().LogicalDevice,
@@ -24,37 +20,44 @@ Render::~Render() {
 
 void Render::createCommandPool() {
 	auto &queueFamilyIndices = Context::GetInstance().QueueFamilyIndices;
-
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	poolInfo.queueFamilyIndex = queueFamilyIndices.GraphicsFamily.value();
-
-	if (vkCreateCommandPool(Context::GetInstance().LogicalDevice, &poolInfo,
-			nullptr, &CommandPool) != VK_SUCCESS) {
+	VkResult result = vkCreateCommandPool(
+		Context::GetInstance().LogicalDevice, &poolInfo, nullptr, &CommandPool);
+	if (result == VK_SUCCESS) {
+		std::cout << "[Vk graphics command pool created]" << std::endl;
+	} else {
+		std::cout << "[Vk graphics command pool creation failed]: " << result
+				  << std::endl;
 		throw std::runtime_error("failed to create graphics command pool!");
 	}
 }
 
 void Render::createCommandBuffers() {
-	CommandBuffers.resize(MaxFramesInFlight);
-
+	CommandBuffers.resize(Context::GetInstance().MaxFramesInFlight);
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.commandPool = CommandPool;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = (uint32_t)CommandBuffers.size();
-
-	if (vkAllocateCommandBuffers(Context::GetInstance().LogicalDevice,
-			&allocInfo, CommandBuffers.data()) != VK_SUCCESS) {
+	VkResult result =
+		vkAllocateCommandBuffers(Context::GetInstance().LogicalDevice,
+			&allocInfo, CommandBuffers.data());
+	if (result == VK_SUCCESS) {
+		std::cout << "[Vk command buffers allocated]" << std::endl;
+	} else {
+		std::cout << "[Vk command buffers allocation failed]: " << result
+				  << std::endl;
 		throw std::runtime_error("failed to allocate command buffers!");
 	}
 }
 
 void Render::createSyncObjects() {
-	ImageAvailableSemaphores.resize(MaxFramesInFlight);
-	RenderFinishedSemaphores.resize(MaxFramesInFlight);
-	InFlightFences.resize(MaxFramesInFlight);
+	ImageAvailableSemaphores.resize(Context::GetInstance().MaxFramesInFlight);
+	RenderFinishedSemaphores.resize(Context::GetInstance().MaxFramesInFlight);
+	InFlightFences.resize(Context::GetInstance().MaxFramesInFlight);
 
 	VkSemaphoreCreateInfo semaphoreInfo{};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -63,7 +66,7 @@ void Render::createSyncObjects() {
 	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-	for (size_t i = 0; i < MaxFramesInFlight; i++) {
+	for (size_t i = 0; i < Context::GetInstance().MaxFramesInFlight; i++) {
 		if (vkCreateSemaphore(Context::GetInstance().LogicalDevice,
 				&semaphoreInfo, nullptr,
 				&ImageAvailableSemaphores[i]) != VK_SUCCESS ||
@@ -76,21 +79,33 @@ void Render::createSyncObjects() {
 				"failed to create synchronization objects for a frame!");
 		}
 	}
+	std::cout << "[Vk synchronization objects created]" << std::endl;
 }
 
 void Render::drawFrame() {
 	vkWaitForFences(Context::GetInstance().LogicalDevice, 1,
 		&InFlightFences[CurrentFrame], VK_TRUE, UINT64_MAX);
-	vkResetFences(
-		Context::GetInstance().LogicalDevice, 1, &InFlightFences[CurrentFrame]);
 
 	uint32_t imageIndex;
-	vkAcquireNextImageKHR(Context::GetInstance().LogicalDevice,
+	VkResult result = vkAcquireNextImageKHR(
+		Context::GetInstance().LogicalDevice,
 		Context::GetInstance().SwapChainContext->SwapChainKHR, UINT64_MAX,
 		ImageAvailableSemaphores[CurrentFrame], VK_NULL_HANDLE, &imageIndex);
 
-	vkResetCommandBuffer(
-		CommandBuffers[CurrentFrame], /*VkCommandBufferResetFlagBits*/ 0);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+		Context::GetInstance().SwapChainContext->recreateSwapChain();
+		return;
+	}
+	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		throw std::runtime_error("failed to acquire swap chain image!");
+	}
+
+	updateUniformBuffer(CurrentFrame);
+
+	vkResetFences(
+		Context::GetInstance().LogicalDevice, 1, &InFlightFences[CurrentFrame]);
+
+	vkResetCommandBuffer(CommandBuffers[CurrentFrame], 0);
 	recordCommandBuffer(CommandBuffers[CurrentFrame], imageIndex);
 
 	VkSubmitInfo submitInfo{};
@@ -128,9 +143,19 @@ void Render::drawFrame() {
 
 	presentInfo.pImageIndices = &imageIndex;
 
-	vkQueuePresentKHR(Context::GetInstance().PresentQueue, &presentInfo);
+	result =
+		vkQueuePresentKHR(Context::GetInstance().PresentQueue, &presentInfo);
 
-	CurrentFrame = (CurrentFrame + 1) % MaxFramesInFlight;
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
+		Context::GetInstance().FramebufferResized) {
+		Context::GetInstance().FramebufferResized = false;
+		Context::GetInstance().SwapChainContext->recreateSwapChain();
+	} else if (result != VK_SUCCESS) {
+		throw std::runtime_error("failed to present swap chain image!");
+	}
+
+	CurrentFrame =
+		(CurrentFrame + 1) % Context::GetInstance().MaxFramesInFlight;
 }
 
 void Render::recordCommandBuffer(
@@ -188,7 +213,12 @@ void Render::recordCommandBuffer(
 		Context::GetInstance().BufferContext->IndexBuffer, 0,
 		VK_INDEX_TYPE_UINT16);
 
-	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+		Context::GetInstance().RenderProcessContext->PipelineLayout, 0, 1,
+		&Context::GetInstance()
+			 .RenderProcessContext->DescriptorSets[CurrentFrame],
+		0, nullptr);
+
 	vkCmdDrawIndexed(commandBuffer,
 		static_cast<uint32_t>(
 			Context::GetInstance().BufferContext->Indices.size()),
@@ -199,5 +229,30 @@ void Render::recordCommandBuffer(
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer!");
 	}
+}
+
+void Render::updateUniformBuffer(uint32_t currentImage) {
+	static auto startTime = std::chrono::high_resolution_clock::now();
+
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration<float, std::chrono::seconds::period>(
+		currentTime - startTime)
+					 .count();
+
+	UniformBufferObject ubo{};
+	ubo.Model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.Proj = glm::perspective(glm::radians(45.0f),
+		Context::GetInstance().SwapChainContext->SwapChainExtent.width /
+			(float)Context::GetInstance()
+				.SwapChainContext->SwapChainExtent.height,
+		0.1f, 10.0f);
+	ubo.Proj[1][1] *= -1;
+
+	memcpy(Context::GetInstance()
+			   .BufferContext->UniformBuffersMapped[currentImage],
+		&ubo, sizeof(ubo));
 }
 } // namespace vw

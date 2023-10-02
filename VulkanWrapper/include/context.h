@@ -37,6 +37,9 @@ class Context {
 	std::unique_ptr<Buffer> BufferContext;
 	std::unique_ptr<Render> RenderContext;
 
+	bool FramebufferResized = false;
+	const int MaxFramesInFlight = 2;
+
   private:
 	Context();
 	~Context();
@@ -48,7 +51,7 @@ class Context {
 	void createInstance();
 	void createSurface();
 	void pickPhysicalDevices();
-	void findQueueFamilies(VkPhysicalDevice physicalDevice);
+	void findQueueFamilies();
 	void createLogicalDevice();
 };
 } // namespace vw

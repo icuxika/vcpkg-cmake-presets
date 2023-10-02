@@ -5,18 +5,21 @@
 #include <iostream>
 
 namespace vw {
+struct SwapChainSupportDetails {
+	VkSurfaceCapabilitiesKHR Capabilities;
+	std::vector<VkSurfaceFormatKHR> Formats;
+	std::vector<VkPresentModeKHR> PresentModes;
+};
+
 class SwapChain {
   public:
 	SwapChain();
 	~SwapChain();
 
-	struct SwapChainSupportDetails {
-		VkSurfaceCapabilitiesKHR Capabilities;
-		std::vector<VkSurfaceFormatKHR> Formats;
-		std::vector<VkPresentModeKHR> PresentModes;
-	};
-
+	void createSwapChain();
+	void createImageViews();
 	void createFramebuffers();
+	void recreateSwapChain();
 
 	VkSwapchainKHR SwapChainKHR;
 	std::vector<VkImage> SwapChainImages;
@@ -26,5 +29,13 @@ class SwapChain {
 	std::vector<VkFramebuffer> SwapChainFramebuffers;
 
   private:
+	void cleanupSwapChain();
+
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(
+		const std::vector<VkSurfaceFormatKHR> &availableFormats);
+	VkPresentModeKHR chooseSwapPresentMode(
+		const std::vector<VkPresentModeKHR> &availablePresentModes);
+	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
 };
 } // namespace vw

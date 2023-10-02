@@ -42,14 +42,29 @@ void Context::initVkContext(GLFWwindow *window) {
 	// 查询物理设备
 	pickPhysicalDevices();
 	// 找到支持图形操作的队列
-	findQueueFamilies(PhysicalDevice);
+	findQueueFamilies();
 	// 创建逻辑设备
 	createLogicalDevice();
+
 	SwapChainContext.reset(new SwapChain());
 	RenderProcessContext.reset(new RenderProcess());
-	SwapChainContext->createFramebuffers();
 	RenderContext.reset(new Render());
 	BufferContext.reset(new Buffer());
+
+	SwapChainContext->createSwapChain();
+	SwapChainContext->createImageViews();
+	RenderProcessContext->createRenderPass();
+	RenderProcessContext->createDescriptorSetLayout();
+	RenderProcessContext->createGraphicsPipeline();
+	SwapChainContext->createFramebuffers();
+	RenderContext->createCommandPool();
+	BufferContext->createVertexBuffer();
+	BufferContext->createIndexBuffer();
+	BufferContext->createUniformBuffers();
+	RenderProcessContext->createDescriptorPool();
+	RenderProcessContext->createDescriptorSets();
+	RenderContext->createCommandBuffers();
+	RenderContext->createSyncObjects();
 };
 
 void Context::createInstance() {
@@ -118,11 +133,11 @@ void Context::pickPhysicalDevices() {
 	PhysicalDevice = devices[0];
 	VkPhysicalDeviceProperties pProperties;
 	vkGetPhysicalDeviceProperties(PhysicalDevice, &pProperties);
-	std::cout << "Vk physical device name: " << pProperties.deviceName
+	std::cout << "[Vk physical device name]: " << pProperties.deviceName
 			  << std::endl;
 }
 
-void Context::findQueueFamilies(VkPhysicalDevice physicalDevice) {
+void Context::findQueueFamilies() {
 	uint32_t queueFamilyCount = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(
 		PhysicalDevice, &queueFamilyCount, nullptr);
