@@ -1,8 +1,9 @@
 {
-  "dependencies": ["cxxopts", "fmt", "range-v3", "glfw3", "glm"],
+  "dependencies": ["cxxopts", "fmt", "range-v3", "glfw3", "glm", "stb"],
   "overrides": [
     { "name": "glfw3", "version": "3.3.8" },
-    { "name": "glm", "version": "0.9.9.8" }
+    { "name": "glm", "version": "0.9.9.8" },
+    { "name": "stb", "version": "2023-04-11" }
   ],
   "builtin-baseline": "962e5e39f8a25f42522f51fffc574e05a3efd26b"
 }

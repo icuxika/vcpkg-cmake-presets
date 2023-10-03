@@ -58,6 +58,9 @@ void Context::initVkContext(GLFWwindow *window) {
 	RenderProcessContext->createGraphicsPipeline();
 	SwapChainContext->createFramebuffers();
 	RenderContext->createCommandPool();
+	BufferContext->createTextureImage();
+	BufferContext->createTextureImageView();
+	BufferContext->createTextureSampler();
 	BufferContext->createVertexBuffer();
 	BufferContext->createIndexBuffer();
 	BufferContext->createUniformBuffers();
