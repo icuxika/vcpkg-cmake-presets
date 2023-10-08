@@ -428,6 +428,18 @@ void Buffer::createYUV420pImage() {
 	createYUVImage(&YImage, &YImageMemory, VideoWidth, VideoHeight);
 	createYUVImage(&UImage, &UImageMemory, VideoWidth / 2, VideoHeight / 2);
 	createYUVImage(&VImage, &VImageMemory, VideoWidth / 2, VideoHeight / 2);
+	transitionImageLayout(YImage, VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	transitionImageLayout(YImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	transitionImageLayout(UImage, VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	transitionImageLayout(UImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	transitionImageLayout(VImage, VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	transitionImageLayout(VImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void Buffer::createYUVImage(VkImage *image, VkDeviceMemory *deviceMemory,
