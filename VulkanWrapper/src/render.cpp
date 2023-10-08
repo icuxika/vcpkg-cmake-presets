@@ -19,7 +19,8 @@ Render::~Render() {
 }
 
 void Render::createCommandPool() {
-	auto &queueFamilyIndices = Context::GetInstance().QueueFamilyIndices;
+	auto queueFamilyIndices = Context::GetInstance().findQueueFamilies(
+		Context::GetInstance().PhysicalDevice);
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;

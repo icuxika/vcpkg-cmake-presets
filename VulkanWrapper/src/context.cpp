@@ -41,8 +41,6 @@ void Context::initVkContext(GLFWwindow *window) {
 	createSurface();
 	// 查询物理设备
 	pickPhysicalDevices();
-	// 找到支持图形操作的队列
-	findQueueFamilies();
 	// 创建逻辑设备
 	createLogicalDevice();
 
@@ -58,9 +56,9 @@ void Context::initVkContext(GLFWwindow *window) {
 	RenderProcessContext->createGraphicsPipeline();
 	SwapChainContext->createFramebuffers();
 	RenderContext->createCommandPool();
-  BufferContext->createYUV420pImage();
-  BufferContext->createYUVImageView();
-  BufferContext->loadYUVData();
+	BufferContext->createYUV420pImage();
+	BufferContext->createYUVImageView();
+	BufferContext->loadYUVData();
 	BufferContext->createTextureImage();
 	BufferContext->createTextureImageView();
 	BufferContext->createTextureSampler();
@@ -136,6 +134,15 @@ void Context::pickPhysicalDevices() {
 	}
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 	vkEnumeratePhysicalDevices(Instance, &deviceCount, devices.data());
+	for (const auto &device : devices) {
+		if (isDeviceSuitable(device)) {
+			PhysicalDevice = device;
+			break;
+		}
+	}
+	if (PhysicalDevice == VK_NULL_HANDLE) {
+		throw std::runtime_error("failed to find a suitable GPU!");
+	}
 	PhysicalDevice = devices[0];
 	VkPhysicalDeviceProperties pProperties;
 	vkGetPhysicalDeviceProperties(PhysicalDevice, &pProperties);
@@ -143,38 +150,47 @@ void Context::pickPhysicalDevices() {
 			  << std::endl;
 }
 
-void Context::findQueueFamilies() {
+QueueFamilyIndices Context::findQueueFamilies(VkPhysicalDevice device) {
+	QueueFamilyIndices indices;
+
 	uint32_t queueFamilyCount = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(
-		PhysicalDevice, &queueFamilyCount, nullptr);
+		device, &queueFamilyCount, nullptr);
 
 	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 	vkGetPhysicalDeviceQueueFamilyProperties(
-		PhysicalDevice, &queueFamilyCount, queueFamilies.data());
+		device, &queueFamilyCount, queueFamilies.data());
 
 	int i = 0;
 	for (const auto &queueFamily : queueFamilies) {
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-			QueueFamilyIndices.GraphicsFamily = i;
+			indices.GraphicsFamily = i;
 		}
+
 		VkBool32 presentSupport = false;
 		vkGetPhysicalDeviceSurfaceSupportKHR(
-			PhysicalDevice, i, Surface, &presentSupport);
+			device, i, Surface, &presentSupport);
+
 		if (presentSupport) {
-			QueueFamilyIndices.PresentFamily = i;
+			indices.PresentFamily = i;
 		}
-		if (QueueFamilyIndices.isComplete()) {
+
+		if (indices.isComplete()) {
 			break;
 		}
+
 		i++;
 	}
+
+	return indices;
 }
 
 void Context::createLogicalDevice() {
+	QueueFamilyIndices indices = findQueueFamilies(PhysicalDevice);
+
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	std::set<uint32_t> uniqueQueueFamilies = {
-		QueueFamilyIndices.GraphicsFamily.value(),
-		QueueFamilyIndices.PresentFamily.value()};
+		indices.GraphicsFamily.value(), indices.PresentFamily.value()};
 
 	float queuePriority = 1.0f;
 	for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -187,11 +203,16 @@ void Context::createLogicalDevice() {
 		queueCreateInfos.push_back(deviceQueueCreateInfo);
 	}
 
+	VkPhysicalDeviceFeatures deviceFeatures{};
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
+
 	VkDeviceCreateInfo deviceCreateInfo{};
 	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
 	deviceCreateInfo.queueCreateInfoCount =
 		static_cast<uint32_t>(queueCreateInfos.size());
+
+	deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
 
 	std::vector<const char *> validationLayers = {};
 	if (isDebug) {
@@ -217,9 +238,69 @@ void Context::createLogicalDevice() {
 		throw std::runtime_error("failed to create logical device!");
 	}
 
-	vkGetDeviceQueue(LogicalDevice, QueueFamilyIndices.GraphicsFamily.value(),
-		0, &GraphicsQueue);
-	vkGetDeviceQueue(LogicalDevice, QueueFamilyIndices.PresentFamily.value(), 0,
-		&PresentQueue);
+	vkGetDeviceQueue(
+		LogicalDevice, indices.GraphicsFamily.value(), 0, &GraphicsQueue);
+	vkGetDeviceQueue(
+		LogicalDevice, indices.PresentFamily.value(), 0, &PresentQueue);
+}
+
+SwapChainSupportDetails Context::querySwapChainSupport(
+	VkPhysicalDevice device) {
+	SwapChainSupportDetails details;
+
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+		device, Surface, &details.Capabilities);
+
+	uint32_t formatCount;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(
+		device, Surface, &formatCount, nullptr);
+
+	if (formatCount != 0) {
+		details.Formats.resize(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(
+			device, Surface, &formatCount, details.Formats.data());
+	}
+
+	uint32_t presentModeCount;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(
+		device, Surface, &presentModeCount, nullptr);
+
+	if (presentModeCount != 0) {
+		details.PresentModes.resize(presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(
+			device, Surface, &presentModeCount, details.PresentModes.data());
+	}
+	return details;
+}
+
+bool Context::isDeviceSuitable(VkPhysicalDevice device) {
+	QueueFamilyIndices indices = findQueueFamilies(device);
+	bool extensionsSupported = checkDeviceExtensionSupport(device);
+	bool swapChainAdequate = false;
+	if (extensionsSupported) {
+		SwapChainSupportDetails swapChainSupport =
+			querySwapChainSupport(device);
+		swapChainAdequate = !swapChainSupport.Formats.empty() &&
+			!swapChainSupport.PresentModes.empty();
+	}
+	VkPhysicalDeviceFeatures supportedFeatures;
+	vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+	return indices.isComplete() && extensionsSupported && swapChainAdequate &&
+		supportedFeatures.samplerAnisotropy;
+}
+
+bool Context::checkDeviceExtensionSupport(VkPhysicalDevice device) {
+	uint32_t extensionCount;
+	vkEnumerateDeviceExtensionProperties(
+		device, nullptr, &extensionCount, nullptr);
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(
+		device, nullptr, &extensionCount, availableExtensions.data());
+	std::set<std::string> requiredExtensions(
+		DeviceExtensions.begin(), DeviceExtensions.end());
+	for (const auto &extension : availableExtensions) {
+		requiredExtensions.erase(extension.extensionName);
+	}
+	return requiredExtensions.empty();
 }
 } // namespace vw

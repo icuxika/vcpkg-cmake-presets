@@ -10,25 +10,24 @@
 #include <iostream>
 
 namespace vw {
+struct QueueFamilyIndices final {
+	std::optional<uint32_t> GraphicsFamily;
+	std::optional<uint32_t> PresentFamily;
+	bool isComplete() {
+		return GraphicsFamily.has_value() && PresentFamily.has_value();
+	}
+};
+
 class Context {
   public:
 	static Context &GetInstance();
 	unsigned long long getAddress();
-
-	struct VkQueueFamilyIndices final {
-		std::optional<uint32_t> GraphicsFamily;
-		std::optional<uint32_t> PresentFamily;
-		bool isComplete() {
-			return GraphicsFamily.has_value() && PresentFamily.has_value();
-		}
-	};
 
 	void initVkContext(GLFWwindow *window);
 
 	GLFWwindow *Window;
 	VkSurfaceKHR Surface;
 	VkPhysicalDevice PhysicalDevice;
-	VkQueueFamilyIndices QueueFamilyIndices;
 	VkQueue GraphicsQueue;
 	VkQueue PresentQueue;
 	VkDevice LogicalDevice;
@@ -36,6 +35,8 @@ class Context {
 	std::unique_ptr<RenderProcess> RenderProcessContext;
 	std::unique_ptr<Buffer> BufferContext;
 	std::unique_ptr<Render> RenderContext;
+
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
 	bool FramebufferResized = false;
 	const int MaxFramesInFlight = 2;
@@ -51,7 +52,12 @@ class Context {
 	void createInstance();
 	void createSurface();
 	void pickPhysicalDevices();
-	void findQueueFamilies();
 	void createLogicalDevice();
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+	bool isDeviceSuitable(VkPhysicalDevice device);
+	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+
+	const std::vector<const char *> DeviceExtensions = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 };
 } // namespace vw

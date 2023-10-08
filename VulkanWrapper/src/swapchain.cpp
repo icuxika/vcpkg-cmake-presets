@@ -34,7 +34,8 @@ void SwapChain::createSwapChain() {
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-	auto &indices = Context::GetInstance().QueueFamilyIndices;
+	auto indices = Context::GetInstance().findQueueFamilies(
+		Context::GetInstance().PhysicalDevice);
 	uint32_t queueFamilyIndices[] = {
 		indices.GraphicsFamily.value(), indices.PresentFamily.value()};
 
