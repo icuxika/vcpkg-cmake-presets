@@ -4,13 +4,9 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-namespace vw {
-struct SwapChainSupportDetails {
-	VkSurfaceCapabilitiesKHR Capabilities;
-	std::vector<VkSurfaceFormatKHR> Formats;
-	std::vector<VkPresentModeKHR> PresentModes;
-};
+#include "structs.h"
 
+namespace vw {
 class SwapChain {
   public:
 	SwapChain();

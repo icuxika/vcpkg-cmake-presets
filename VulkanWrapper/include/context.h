@@ -10,14 +10,6 @@
 #include <iostream>
 
 namespace vw {
-struct QueueFamilyIndices final {
-	std::optional<uint32_t> GraphicsFamily;
-	std::optional<uint32_t> PresentFamily;
-	bool isComplete() {
-		return GraphicsFamily.has_value() && PresentFamily.has_value();
-	}
-};
-
 class Context {
   public:
 	static Context &GetInstance();
@@ -48,6 +40,7 @@ class Context {
 	Context &operator=(const Context &) = delete;
 
 	VkInstance Instance;
+	VkDebugUtilsMessengerEXT DebugMessenger;
 
 	void createInstance();
 	void createSurface();
@@ -56,8 +49,23 @@ class Context {
 	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+	std::vector<const char *> getRequiredExtensions();
+  bool checkValidationLayerSupport();
+	void populateDebugMessengerCreateInfo(
+		VkDebugUtilsMessengerCreateInfoEXT &createInfo);
+	void setupDebugMessenger();
+	VkResult createDebugUtilsMessengerEXT(VkInstance instance,
+		const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+		const VkAllocationCallbacks *pAllocator,
+		VkDebugUtilsMessengerEXT *pDebugMessenger);
+	void destroyDebugUtilsMessengerEXT(VkInstance instance,
+		VkDebugUtilsMessengerEXT debugMessenger,
+		const VkAllocationCallbacks *pAllocator);
+
+	const std::vector<const char *> ValidationLayers = {
+		"VK_LAYER_KHRONOS_validation"};
 
 	const std::vector<const char *> DeviceExtensions = {
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset"};
 };
 } // namespace vw

@@ -419,13 +419,15 @@ void Buffer::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 	vkFreeCommandBuffers(Context::GetInstance().LogicalDevice,
 		Context::GetInstance().RenderContext->CommandPool, 1, &commandBuffer);
 }
+void Buffer::setupVideoSize(int width, int height) {
+	VideoWidth = width;
+	VideoHeight = height;
+}
 
 void Buffer::createYUV420pImage() {
-	int width = 3840, height = 2160;
-	// create new 3 image
-	createYUVImage(&YImage, &YImageMemory, width, height);
-	createYUVImage(&UImage, &UImageMemory, width / 2, height / 2);
-	createYUVImage(&VImage, &VImageMemory, width / 2, height / 2);
+	createYUVImage(&YImage, &YImageMemory, VideoWidth, VideoHeight);
+	createYUVImage(&UImage, &UImageMemory, VideoWidth / 2, VideoHeight / 2);
+	createYUVImage(&VImage, &VImageMemory, VideoWidth / 2, VideoHeight / 2);
 }
 
 void Buffer::createYUVImage(VkImage *image, VkDeviceMemory *deviceMemory,
@@ -472,19 +474,19 @@ void Buffer::createYUVImage(VkImage *image, VkDeviceMemory *deviceMemory,
 		Context::GetInstance().LogicalDevice, *image, *deviceMemory, 0);
 }
 
-void Buffer::createYUVImageView() {
-	YImageView = createYUV420ImageView(
+void Buffer::createYUV420pImageView() {
+	YImageView = createYUVImageView(
 		YImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
-	UImageView = createYUV420ImageView(
+	UImageView = createYUVImageView(
 		UImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
-	VImageView = createYUV420ImageView(
+	VImageView = createYUVImageView(
 		VImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 	createYUVSampler(&YSampler);
 	createYUVSampler(&USampler);
 	createYUVSampler(&VSampler);
 }
 
-VkImageView Buffer::createYUV420ImageView(
+VkImageView Buffer::createYUVImageView(
 	VkImage image, VkFormat format, VkImageAspectFlags aspectMask) {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -531,7 +533,6 @@ void Buffer::createYUVSampler(VkSampler *sampler) {
 }
 
 void Buffer::loadYUVData() {
-	int width = 3840, height = 2160;
 	std::ifstream is(
 		"/Users/icuxika/Downloads/video_output_file", std::ios::binary);
 	if (!is.is_open()) {
@@ -546,15 +547,15 @@ void Buffer::loadYUVData() {
 	is.close();
 
 	uint8_t *yData = buffer.data();
-	uint8_t *uData = yData + width * height;
-	uint8_t *vData = uData + (width / 2) * (height / 2);
+	uint8_t *uData = yData + VideoWidth * VideoHeight;
+	uint8_t *vData = uData + (VideoWidth / 2) * (VideoHeight / 2);
 
-	copyYUVData2Image(&YImage, yData, width, height);
-	copyYUVData2Image(&UImage, uData, width / 2, height / 2);
-	copyYUVData2Image(&VImage, vData, width / 2, height / 2);
+	copyYUVDataToImage(&YImage, yData, VideoWidth, VideoHeight);
+	copyYUVDataToImage(&UImage, uData, VideoWidth / 2, VideoHeight / 2);
+	copyYUVDataToImage(&VImage, vData, VideoWidth / 2, VideoHeight / 2);
 }
 
-void Buffer::copyYUVData2Image(
+void Buffer::copyYUVDataToImage(
 	VkImage *image, uint8_t *yuvData, int width, int height) {
 	size_t imageSize = width * height;
 	VkBuffer stagingBuffer;

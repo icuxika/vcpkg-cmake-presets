@@ -3,9 +3,6 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-static void keyCallback(
-	GLFWwindow *window, int key, int scancode, int action, int mods);
-
 int main(int argc, char **argv) {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -14,7 +11,15 @@ int main(int argc, char **argv) {
 
 	vw::Context::GetInstance().initVkContext(window);
 
-	glfwSetKeyCallback(window, keyCallback);
+	glfwSetKeyCallback(window,
+		[](GLFWwindow *window, int key, int scancode, int action, int mods) {
+			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+				glfwSetWindowShouldClose(window, GLFW_TRUE);
+			}
+			if (key == GLFW_KEY_U && action == GLFW_PRESS) {
+				vw::Context::GetInstance().BufferContext->loadYUVData();
+			}
+		});
 	glfwSetFramebufferSizeCallback(
 		window, [](GLFWwindow *window, int width, int height) {
 			vw::Context::GetInstance().FramebufferResized = true;
@@ -29,8 +34,3 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-static void keyCallback(
-	GLFWwindow *window, int key, int scancode, int action, int mods) {
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, GLFW_TRUE);
-}
