@@ -87,8 +87,33 @@ void RenderProcess::createDescriptorSetLayout() {
 	samplerLayoutBinding.pImmutableSamplers = nullptr;
 	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	std::array<VkDescriptorSetLayoutBinding, 2> bindings = {
-		uboLayoutBinding, samplerLayoutBinding};
+	VkDescriptorSetLayoutBinding ySamplerLayoutBinding{};
+	ySamplerLayoutBinding.binding = 2;
+	ySamplerLayoutBinding.descriptorCount = 1;
+	ySamplerLayoutBinding.descriptorType =
+		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	ySamplerLayoutBinding.pImmutableSamplers = nullptr;
+	ySamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	VkDescriptorSetLayoutBinding uSamplerLayoutBinding{};
+	uSamplerLayoutBinding.binding = 3;
+	uSamplerLayoutBinding.descriptorCount = 1;
+	uSamplerLayoutBinding.descriptorType =
+		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	uSamplerLayoutBinding.pImmutableSamplers = nullptr;
+	uSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	VkDescriptorSetLayoutBinding vSamplerLayoutBinding{};
+	vSamplerLayoutBinding.binding = 4;
+	vSamplerLayoutBinding.descriptorCount = 1;
+	vSamplerLayoutBinding.descriptorType =
+		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	vSamplerLayoutBinding.pImmutableSamplers = nullptr;
+	vSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	std::array<VkDescriptorSetLayoutBinding, 5> bindings = {uboLayoutBinding,
+		samplerLayoutBinding, ySamplerLayoutBinding, uSamplerLayoutBinding,
+		vSamplerLayoutBinding};
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -245,12 +270,21 @@ void RenderProcess::createGraphicsPipeline() {
 }
 
 void RenderProcess::createDescriptorPool() {
-	std::array<VkDescriptorPoolSize, 2> poolSizes{};
+	std::array<VkDescriptorPoolSize, 5> poolSizes{};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount =
 		static_cast<uint32_t>(Context::GetInstance().MaxFramesInFlight);
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	poolSizes[1].descriptorCount =
+		static_cast<uint32_t>(Context::GetInstance().MaxFramesInFlight);
+	poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[2].descriptorCount =
+		static_cast<uint32_t>(Context::GetInstance().MaxFramesInFlight);
+	poolSizes[3].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[3].descriptorCount =
+		static_cast<uint32_t>(Context::GetInstance().MaxFramesInFlight);
+	poolSizes[4].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[4].descriptorCount =
 		static_cast<uint32_t>(Context::GetInstance().MaxFramesInFlight);
 
 	VkDescriptorPoolCreateInfo poolInfo{};
@@ -308,7 +342,25 @@ void RenderProcess::createDescriptorSets() {
 		imageInfo.sampler =
 			Context::GetInstance().BufferContext->TextureSampler;
 
-		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+		VkDescriptorImageInfo yImageInfo{};
+		yImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		yImageInfo.imageView = Context::GetInstance().BufferContext->YImageView;
+		yImageInfo.sampler =
+			Context::GetInstance().BufferContext->YSampler;
+
+		VkDescriptorImageInfo uImageInfo{};
+		uImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		uImageInfo.imageView = Context::GetInstance().BufferContext->UImageView;
+		uImageInfo.sampler =
+			Context::GetInstance().BufferContext->USampler;
+
+		VkDescriptorImageInfo vImageInfo{};
+		vImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		vImageInfo.imageView = Context::GetInstance().BufferContext->VImageView;
+		vImageInfo.sampler =
+			Context::GetInstance().BufferContext->VSampler;
+
+		std::array<VkWriteDescriptorSet, 5> descriptorWrites{};
 
 		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[0].dstSet = DescriptorSets[i];
@@ -326,6 +378,33 @@ void RenderProcess::createDescriptorSets() {
 			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		descriptorWrites[1].descriptorCount = 1;
 		descriptorWrites[1].pImageInfo = &imageInfo;
+
+		descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[2].dstSet = DescriptorSets[i];
+		descriptorWrites[2].dstBinding = 2;
+		descriptorWrites[2].dstArrayElement = 0;
+		descriptorWrites[2].descriptorType =
+			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[2].descriptorCount = 1;
+		descriptorWrites[2].pImageInfo = &yImageInfo;
+
+		descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[3].dstSet = DescriptorSets[i];
+		descriptorWrites[3].dstBinding = 3;
+		descriptorWrites[3].dstArrayElement = 0;
+		descriptorWrites[3].descriptorType =
+			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[3].descriptorCount = 1;
+		descriptorWrites[3].pImageInfo = &uImageInfo;
+
+		descriptorWrites[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[4].dstSet = DescriptorSets[i];
+		descriptorWrites[4].dstBinding = 4;
+		descriptorWrites[4].dstArrayElement = 0;
+		descriptorWrites[4].descriptorType =
+			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[4].descriptorCount = 1;
+		descriptorWrites[4].pImageInfo = &vImageInfo;
 
 		vkUpdateDescriptorSets(Context::GetInstance().LogicalDevice,
 			static_cast<uint32_t>(descriptorWrites.size()),

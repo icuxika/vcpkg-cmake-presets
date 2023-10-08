@@ -1,10 +1,12 @@
 #pragma once
 
+#include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
 #include <array>
+#include <fstream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
@@ -77,8 +79,33 @@ class Buffer {
 	void createUniformBuffers();
 
 	const std::vector<uint16_t> Indices = {0, 1, 2, 2, 3, 0};
+	// yuv420p
+	VkImageView YImageView;
+	VkImageView UImageView;
+	VkImageView VImageView;
+	VkSampler YSampler;
+	VkSampler USampler;
+	VkSampler VSampler;
+	void createYUV420pImage();
+	void createYUVImageView();
+	void createYUVSampler(VkSampler *sampler);
+	void loadYUVData();
+	// yuv420p
 
   private:
+	// yuv420p
+	VkImage YImage;
+	VkDeviceMemory YImageMemory;
+	VkImage UImage;
+	VkDeviceMemory UImageMemory;
+	VkImage VImage;
+	VkDeviceMemory VImageMemory;
+	VkImageView createYUV420ImageView(
+		VkImage image, VkFormat format, VkImageAspectFlags aspectMask);
+  void createYUVImage(VkImage *image, VkDeviceMemory *deviceMemory, uint32_t width, uint32_t height);
+  void copyYUVData2Image(VkImage *image, uint8_t *yuvData, int width, int height);
+	// yuv420p
+
 	VkImage TextureImage;
 	VkDeviceMemory TextureImageMemory;
 	VkDeviceMemory VertexBufferMemory;
@@ -93,8 +120,8 @@ class Buffer {
 		VkImageTiling tiling, VkImageUsageFlags usage,
 		VkMemoryPropertyFlags properties, VkImage &image,
 		VkDeviceMemory &imageMemory);
-	void transitionImageLayout(VkImage image, VkFormat format,
-		VkImageLayout oldLayout, VkImageLayout newLayout);
+	void transitionImageLayout(
+		VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void copyBufferToImage(
 		VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
@@ -111,9 +138,9 @@ class Buffer {
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 
 	const std::vector<Vertex> Vertices = {
-		{{-1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},
-		{{1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},
-		{{1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
-		{{-1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}}};
+		{{-1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 左下角
+		{{1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},	// 右下角
+		{{1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},	// 右上角
+		{{-1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}}}; // 左上角
 };
 } // namespace vw

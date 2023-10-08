@@ -28,6 +28,19 @@ Buffer::~Buffer() {
 	vkDestroyImage(Context::GetInstance().LogicalDevice, TextureImage, nullptr);
 	vkFreeMemory(
 		Context::GetInstance().LogicalDevice, TextureImageMemory, nullptr);
+
+	vkDestroyImageView(
+		Context::GetInstance().LogicalDevice, YImageView, nullptr);
+	vkDestroyImageView(
+		Context::GetInstance().LogicalDevice, UImageView, nullptr);
+	vkDestroyImageView(
+		Context::GetInstance().LogicalDevice, VImageView, nullptr);
+	vkDestroyImage(Context::GetInstance().LogicalDevice, VImage, nullptr);
+	vkFreeMemory(Context::GetInstance().LogicalDevice, VImageMemory, nullptr);
+	vkDestroyImage(Context::GetInstance().LogicalDevice, UImage, nullptr);
+	vkFreeMemory(Context::GetInstance().LogicalDevice, UImageMemory, nullptr);
+	vkDestroyImage(Context::GetInstance().LogicalDevice, YImage, nullptr);
+	vkFreeMemory(Context::GetInstance().LogicalDevice, YImageMemory, nullptr);
 }
 
 void Buffer::createTextureImage() {
@@ -60,12 +73,11 @@ void Buffer::createTextureImage() {
 		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, TextureImage, TextureImageMemory);
 
-	transitionImageLayout(TextureImage, VK_FORMAT_R8G8B8A8_SRGB,
-		VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	transitionImageLayout(TextureImage, VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	copyBufferToImage(stagingBuffer, TextureImage,
 		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-	transitionImageLayout(TextureImage, VK_FORMAT_R8G8B8A8_SRGB,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	transitionImageLayout(TextureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	vkDestroyBuffer(
@@ -168,8 +180,8 @@ void Buffer::createImage(uint32_t width, uint32_t height, VkFormat format,
 		Context::GetInstance().LogicalDevice, image, imageMemory, 0);
 }
 
-void Buffer::transitionImageLayout(VkImage image, VkFormat format,
-	VkImageLayout oldLayout, VkImageLayout newLayout) {
+void Buffer::transitionImageLayout(
+	VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout) {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
 	VkImageMemoryBarrier barrier{};
@@ -408,4 +420,166 @@ void Buffer::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 		Context::GetInstance().RenderContext->CommandPool, 1, &commandBuffer);
 }
 
+void Buffer::createYUV420pImage() {
+	int width = 3840, height = 2160;
+	// create new 3 image
+	createYUVImage(&YImage, &YImageMemory, width, height);
+	createYUVImage(&UImage, &UImageMemory, width / 2, height / 2);
+	createYUVImage(&VImage, &VImageMemory, width / 2, height / 2);
+}
+
+void Buffer::createYUVImage(VkImage *image, VkDeviceMemory *deviceMemory,
+	uint32_t width, uint32_t height) {
+	VkImageCreateInfo imageInfo{};
+	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageInfo.extent.width = width;
+	imageInfo.extent.height = height;
+	imageInfo.extent.depth = 1;
+	imageInfo.mipLevels = 1;
+	imageInfo.arrayLayers = 1;
+	imageInfo.format = VK_FORMAT_R8_UNORM;
+	imageInfo.tiling = VK_IMAGE_TILING_LINEAR;
+	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageInfo.usage =
+		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	imageInfo.flags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
+
+	if (vkCreateImage(Context::GetInstance().LogicalDevice, &imageInfo, nullptr,
+			image) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create image!");
+	}
+
+	VkMemoryRequirements memRequirements;
+	vkGetImageMemoryRequirements(
+		Context::GetInstance().LogicalDevice, *image, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	if (vkAllocateMemory(Context::GetInstance().LogicalDevice, &allocInfo,
+			nullptr, deviceMemory) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate image memory!");
+	}
+
+	vkBindImageMemory(
+		Context::GetInstance().LogicalDevice, *image, *deviceMemory, 0);
+}
+
+void Buffer::createYUVImageView() {
+	YImageView = createYUV420ImageView(
+		YImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+	UImageView = createYUV420ImageView(
+		UImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+	VImageView = createYUV420ImageView(
+		VImage, VK_FORMAT_R8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+	createYUVSampler(&YSampler);
+	createYUVSampler(&USampler);
+	createYUVSampler(&VSampler);
+}
+
+VkImageView Buffer::createYUV420ImageView(
+	VkImage image, VkFormat format, VkImageAspectFlags aspectMask) {
+	VkImageViewCreateInfo viewInfo{};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = image;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = format;
+	viewInfo.subresourceRange.aspectMask = aspectMask;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 1;
+	VkImageView imageView;
+	if (vkCreateImageView(Context::GetInstance().LogicalDevice, &viewInfo,
+			nullptr, &imageView) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create texture image view!");
+	}
+	return imageView;
+}
+
+void Buffer::createYUVSampler(VkSampler *sampler) {
+	VkPhysicalDeviceProperties properties{};
+	vkGetPhysicalDeviceProperties(
+		Context::GetInstance().PhysicalDevice, &properties);
+
+	VkSamplerCreateInfo samplerInfo{};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+	if (vkCreateSampler(Context::GetInstance().LogicalDevice, &samplerInfo,
+			nullptr, sampler) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create texture sampler!");
+	}
+}
+
+void Buffer::loadYUVData() {
+	int width = 3840, height = 2160;
+	std::ifstream is(
+		"/Users/icuxika/Downloads/video_output_file", std::ios::binary);
+	if (!is.is_open()) {
+		std::cout << "open file failed" << std::endl;
+	}
+	is.seekg(0, std::ios::end);
+	int length = is.tellg();
+	is.seekg(0, std::ios::beg);
+
+	std::vector<uint8_t> buffer(length);
+	is.read(reinterpret_cast<char *>(buffer.data()), length);
+	is.close();
+
+	uint8_t *yData = buffer.data();
+	uint8_t *uData = yData + width * height;
+	uint8_t *vData = uData + (width / 2) * (height / 2);
+
+	copyYUVData2Image(&YImage, yData, width, height);
+	copyYUVData2Image(&UImage, uData, width / 2, height / 2);
+	copyYUVData2Image(&VImage, vData, width / 2, height / 2);
+}
+
+void Buffer::copyYUVData2Image(
+	VkImage *image, uint8_t *yuvData, int width, int height) {
+	size_t imageSize = width * height;
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer, stagingBufferMemory);
+
+	void *data;
+	vkMapMemory(Context::GetInstance().LogicalDevice, stagingBufferMemory, 0,
+		imageSize, 0, &data);
+	memcpy(data, yuvData, static_cast<size_t>(imageSize));
+	vkUnmapMemory(Context::GetInstance().LogicalDevice, stagingBufferMemory);
+
+	transitionImageLayout(*image, VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	copyBufferToImage(stagingBuffer, *image, static_cast<uint32_t>(width),
+		static_cast<uint32_t>(height));
+	transitionImageLayout(*image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	vkDestroyBuffer(
+		Context::GetInstance().LogicalDevice, stagingBuffer, nullptr);
+	vkFreeMemory(
+		Context::GetInstance().LogicalDevice, stagingBufferMemory, nullptr);
+}
 } // namespace vw

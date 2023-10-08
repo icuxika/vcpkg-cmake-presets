@@ -58,6 +58,9 @@ void Context::initVkContext(GLFWwindow *window) {
 	RenderProcessContext->createGraphicsPipeline();
 	SwapChainContext->createFramebuffers();
 	RenderContext->createCommandPool();
+  BufferContext->createYUV420pImage();
+  BufferContext->createYUVImageView();
+  BufferContext->loadYUVData();
 	BufferContext->createTextureImage();
 	BufferContext->createTextureImageView();
 	BufferContext->createTextureSampler();
