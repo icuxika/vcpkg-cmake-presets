@@ -38,7 +38,7 @@ unsigned long long Context::getAddress() {
 	return reinterpret_cast<unsigned long long>(this);
 }
 
-void Context::initVkContext(GLFWwindow *window) {
+void Context::initVkContext(GLFWwindow *window, int videoWidth, int videoHeight) {
 	this->Window = window;
 	createInstance();
 	setupDebugMessenger();
@@ -60,10 +60,9 @@ void Context::initVkContext(GLFWwindow *window) {
 	RenderProcessContext->createGraphicsPipeline();
 	SwapChainContext->createFramebuffers();
 	RenderContext->createCommandPool();
-	BufferContext->setupVideoSize(3840, 2160);
+	BufferContext->setupVideoSize(videoWidth, videoHeight);
 	BufferContext->createYUV420pImage();
 	BufferContext->createYUV420pImageView();
-	// BufferContext->loadYUVData();
 	BufferContext->createTextureImage();
 	BufferContext->createTextureImageView();
 	BufferContext->createTextureSampler();

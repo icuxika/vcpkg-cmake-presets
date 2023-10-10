@@ -41,6 +41,19 @@ Buffer::~Buffer() {
 	vkFreeMemory(Context::GetInstance().LogicalDevice, UImageMemory, nullptr);
 	vkDestroyImage(Context::GetInstance().LogicalDevice, YImage, nullptr);
 	vkFreeMemory(Context::GetInstance().LogicalDevice, YImageMemory, nullptr);
+
+	vkDestroyBuffer(
+		Context::GetInstance().LogicalDevice, VStagingBuffer, nullptr);
+	vkFreeMemory(
+		Context::GetInstance().LogicalDevice, VStagingBufferMemory, nullptr);
+	vkDestroyBuffer(
+		Context::GetInstance().LogicalDevice, UStagingBuffer, nullptr);
+	vkFreeMemory(
+		Context::GetInstance().LogicalDevice, UStagingBufferMemory, nullptr);
+	vkDestroyBuffer(
+		Context::GetInstance().LogicalDevice, YStagingBuffer, nullptr);
+	vkFreeMemory(
+		Context::GetInstance().LogicalDevice, YStagingBufferMemory, nullptr);
 }
 
 void Buffer::createTextureImage() {
@@ -496,6 +509,8 @@ void Buffer::createYUV420pImageView() {
 	createYUVSampler(&YSampler);
 	createYUVSampler(&USampler);
 	createYUVSampler(&VSampler);
+
+	createStagingBuffer();
 }
 
 VkImageView Buffer::createYUVImageView(
@@ -544,55 +559,51 @@ void Buffer::createYUVSampler(VkSampler *sampler) {
 	}
 }
 
-void Buffer::loadYUVData() {
-	std::ifstream is(
-		"/Users/icuxika/Downloads/video_output_file", std::ios::binary);
-	if (!is.is_open()) {
-		std::cout << "open file failed" << std::endl;
-	}
-	is.seekg(0, std::ios::end);
-	int length = is.tellg();
-	is.seekg(0, std::ios::beg);
-
-	std::vector<uint8_t> buffer(length);
-	is.read(reinterpret_cast<char *>(buffer.data()), length);
-	is.close();
-
-	uint8_t *yData = buffer.data();
-	uint8_t *uData = yData + VideoWidth * VideoHeight;
-	uint8_t *vData = uData + (VideoWidth / 2) * (VideoHeight / 2);
-
-	copyYUVDataToImage(&YImage, yData, VideoWidth, VideoHeight);
-	copyYUVDataToImage(&UImage, uData, VideoWidth / 2, VideoHeight / 2);
-	copyYUVDataToImage(&VImage, vData, VideoWidth / 2, VideoHeight / 2);
-}
-
-void Buffer::copyYUVDataToImage(
-	VkImage *image, uint8_t *yuvData, int width, int height) {
-	size_t imageSize = width * height;
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+void Buffer::createStagingBuffer() {
+	createBuffer(VideoWidth * VideoHeight, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer, stagingBufferMemory);
+		YStagingBuffer, YStagingBufferMemory);
+	vkMapMemory(Context::GetInstance().LogicalDevice, YStagingBufferMemory, 0,
+		VideoWidth * VideoHeight, 0, &YBufferData);
 
-	void *data;
-	vkMapMemory(Context::GetInstance().LogicalDevice, stagingBufferMemory, 0,
-		imageSize, 0, &data);
-	memcpy(data, yuvData, static_cast<size_t>(imageSize));
-	vkUnmapMemory(Context::GetInstance().LogicalDevice, stagingBufferMemory);
+	createBuffer(VideoWidth * VideoHeight / 4, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		UStagingBuffer, UStagingBufferMemory);
+	vkMapMemory(Context::GetInstance().LogicalDevice, UStagingBufferMemory, 0,
+		VideoWidth * VideoHeight / 4, 0, &UBufferData);
 
+	createBuffer(VideoWidth * VideoHeight / 4, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		VStagingBuffer, VStagingBufferMemory);
+	vkMapMemory(Context::GetInstance().LogicalDevice, VStagingBufferMemory, 0,
+		VideoWidth * VideoHeight / 4, 0, &VBufferData);
+}
+
+void Buffer::loadYUVData(uint8_t *yuvData) {
+	uint8_t *yData = yuvData;
+	uint8_t *uData = yData + VideoWidth * VideoHeight;
+	uint8_t *vData = uData + (VideoWidth / 2) * (VideoHeight / 2);
+	copyYUVDataToImage(&YImage, yData, YBufferData, VideoWidth, VideoHeight,
+		YStagingBuffer, YStagingBufferMemory);
+	copyYUVDataToImage(&UImage, uData, UBufferData, VideoWidth / 2,
+		VideoHeight / 2, UStagingBuffer, UStagingBufferMemory);
+	copyYUVDataToImage(&VImage, vData, VBufferData, VideoWidth / 2,
+		VideoHeight / 2, VStagingBuffer, VStagingBufferMemory);
+}
+
+void Buffer::copyYUVDataToImage(VkImage *image, uint8_t *yuvData,
+	void *bufferData, int width, int height, VkBuffer stagingBuffer,
+	VkDeviceMemory stagingBufferMemory) {
+	size_t imageSize = width * height;
+	memcpy(bufferData, yuvData, static_cast<size_t>(imageSize));
 	transitionImageLayout(*image, VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	copyBufferToImage(stagingBuffer, *image, static_cast<uint32_t>(width),
 		static_cast<uint32_t>(height));
 	transitionImageLayout(*image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-	vkDestroyBuffer(
-		Context::GetInstance().LogicalDevice, stagingBuffer, nullptr);
-	vkFreeMemory(
-		Context::GetInstance().LogicalDevice, stagingBufferMemory, nullptr);
 }
 } // namespace vw

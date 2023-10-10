@@ -6,7 +6,6 @@
 
 #define GLM_FORCE_RADIANS
 #include <array>
-#include <fstream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
@@ -27,11 +26,10 @@ class Buffer {
 	VkSampler YSampler;
 	VkSampler USampler;
 	VkSampler VSampler;
-  void setupVideoSize(int width, int height);
+	void setupVideoSize(int width, int height);
 	void createYUV420pImage();
 	void createYUV420pImageView();
-	void createYUVSampler(VkSampler *sampler);
-	void loadYUVData();
+	void loadYUVData(uint8_t *yuvData);
 	// yuv420p
 	VkImageView TextureImageView;
 	VkSampler TextureSampler;
@@ -52,20 +50,34 @@ class Buffer {
 
   private:
 	// yuv420p
-  int VideoWidth;
-  int VideoHeight;
+	int VideoWidth;
+	int VideoHeight;
 	VkImage YImage;
 	VkDeviceMemory YImageMemory;
 	VkImage UImage;
 	VkDeviceMemory UImageMemory;
 	VkImage VImage;
 	VkDeviceMemory VImageMemory;
+
+	void *YBufferData;
+	VkBuffer YStagingBuffer;
+	VkDeviceMemory YStagingBufferMemory;
+	void *UBufferData;
+	VkBuffer UStagingBuffer;
+	VkDeviceMemory UStagingBufferMemory;
+	void *VBufferData;
+	VkBuffer VStagingBuffer;
+	VkDeviceMemory VStagingBufferMemory;
+
 	void createYUVImage(VkImage *image, VkDeviceMemory *deviceMemory,
 		uint32_t width, uint32_t height);
 	VkImageView createYUVImageView(
 		VkImage image, VkFormat format, VkImageAspectFlags aspectMask);
-	void copyYUVDataToImage(
-		VkImage *image, uint8_t *yuvData, int width, int height);
+	void createYUVSampler(VkSampler *sampler);
+	void createStagingBuffer();
+	void copyYUVDataToImage(VkImage *image, uint8_t *yuvData, void *bufferData,
+		int width, int height, VkBuffer stagingBuffer,
+		VkDeviceMemory stagingBufferMemory);
 	// yuv420p
 
 	VkImage TextureImage;

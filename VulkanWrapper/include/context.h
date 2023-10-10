@@ -15,7 +15,7 @@ class Context {
 	static Context &GetInstance();
 	unsigned long long getAddress();
 
-	void initVkContext(GLFWwindow *window);
+	void initVkContext(GLFWwindow *window, int videoWidth, int videoHeight);
 
 	GLFWwindow *Window;
 	VkSurfaceKHR Surface;
