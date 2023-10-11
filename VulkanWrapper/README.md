@@ -41,6 +41,22 @@ cd .\out\build\windows-clang-cl\VulkanWrapper\Debug\
 
 Vulkan 与 MSI Afterburner 有冲突，可能会导致 Vulkan 中 SwapChain 的创建出现奇怪问题，MSI Afterburner 即使不开机启动也会后台跑一个进程，需要在任务管理器杀掉
 
+## Windows MSVC
+
+> 不需要在 Visual Studio 提供的命令行环境中运行
+
+```
+cmake --preset windows-default-user
+cmake --build --preset windows-default-debug-user
+
+cp -Recurse .\VulkanWrapper\shaders-bin\ .\out\build\windows-default\VulkanWrapper\Debug\shaders
+cp C:\CommandLineTools\ffmpeg-6.0-full_build-shared\bin\*.dll .\out\build\windows-default\VulkanWrapper\Debug\
+cp -Recurse .\VulkanWrapper\textures\ .\out\build\windows-default\VulkanWrapper\Debug\
+
+cd .\out\build\windows-default\VulkanWrapper\Debug\
+.\VulkanWrapper.exe -f C:\Users\icuxika\Desktop\test.mp4
+```
+
 ## macOS
 
 ```
