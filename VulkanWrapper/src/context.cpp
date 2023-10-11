@@ -3,7 +3,6 @@
 #include "render-process.h"
 #include "render.h"
 #include "swapchain.h"
-#include <_types/_uint32_t.h>
 #include <set>
 #include <vector>
 #include <vulkan/vulkan_core.h>

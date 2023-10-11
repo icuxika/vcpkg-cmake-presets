@@ -1,5 +1,6 @@
 #include "swapchain.h"
 #include "context.h"
+#include <algorithm>
 #include <vulkan/vulkan_core.h>
 
 namespace vw {

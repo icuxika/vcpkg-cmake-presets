@@ -1,7 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "buffer.h"
 #include "context.h"
-#include <_types/_uint32_t.h>
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 

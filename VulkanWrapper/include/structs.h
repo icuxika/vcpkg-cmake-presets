@@ -2,9 +2,12 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <array>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <optional>
+#include <vector>
 
 namespace vw {
 struct QueueFamilyIndices final {
