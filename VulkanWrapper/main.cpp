@@ -10,9 +10,11 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include <mutex>
 #include <vector>
 
-std::list<uint8_t *> yuvDataList;
+std::list<std::vector<uint8_t>> yuvDataList;
+std::mutex yuvMutex;
 
 int main(int argc, char **argv) {
 	cxxopts::Options options("VulkanWrapper", "Yuv420P Player");
@@ -33,7 +35,7 @@ int main(int argc, char **argv) {
 	demuxUtil.VideoHandler = [](AVFrame *frame) {
 		std::chrono::high_resolution_clock::time_point start =
 			std::chrono::high_resolution_clock::now();
-		std::this_thread::sleep_for(70ms);
+		// std::this_thread::sleep_for(70ms);
 		std::vector<uint8_t> buffer;
 		size_t bufferSize = frame->width * frame->height * 3 / 2;
 		buffer.resize(bufferSize);
@@ -60,7 +62,8 @@ int main(int argc, char **argv) {
 			std::chrono::duration_cast<std::chrono::microseconds>(end - start)
 				.count();
 		// std::cout << "[vedio] " << duration << std::endl;
-		yuvDataList.push_back(buffer.data());
+		std::lock_guard<std::mutex> lock(yuvMutex);
+		yuvDataList.push_back(buffer);
 	};
 	demuxUtil.AudioHandler = [](AVFrame *frame) {};
 	demuxUtil.openFile(url);
@@ -72,7 +75,8 @@ int main(int argc, char **argv) {
 	GLFWwindow *window =
 		glfwCreateWindow(1280, 720, "Vulkan Wrapper", nullptr, nullptr);
 
-	vw::Context::GetInstance().initVkContext(window, 3840, 2160);
+	vw::Context::GetInstance().initVkContext(
+		window, demuxUtil.Width, demuxUtil.Height);
 
 	glfwSetKeyCallback(window,
 		[](GLFWwindow *window, int key, int scancode, int action, int mods) {
@@ -93,8 +97,9 @@ int main(int argc, char **argv) {
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
+		std::lock_guard<std::mutex> lock(yuvMutex);
 		if (!yuvDataList.empty()) {
-			uint8_t *data = yuvDataList.front();
+      std::vector<uint8_t> data = yuvDataList.front();
 			vw::Context::GetInstance().BufferContext->loadYUVData(data);
 			yuvDataList.pop_front();
 		}

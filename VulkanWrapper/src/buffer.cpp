@@ -593,6 +593,18 @@ void Buffer::loadYUVData(uint8_t *yuvData) {
 		VideoHeight / 2, VStagingBuffer, VStagingBufferMemory);
 }
 
+void Buffer::loadYUVData(std::vector<uint8_t> yuvData) {
+	uint8_t *yData = yuvData.data();
+	uint8_t *uData = yData + VideoWidth * VideoHeight;
+	uint8_t *vData = uData + (VideoWidth / 2) * (VideoHeight / 2);
+	copyYUVDataToImage(&YImage, yData, YBufferData, VideoWidth, VideoHeight,
+		YStagingBuffer, YStagingBufferMemory);
+	copyYUVDataToImage(&UImage, uData, UBufferData, VideoWidth / 2,
+		VideoHeight / 2, UStagingBuffer, UStagingBufferMemory);
+	copyYUVDataToImage(&VImage, vData, VBufferData, VideoWidth / 2,
+		VideoHeight / 2, VStagingBuffer, VStagingBufferMemory);
+}
+
 void Buffer::copyYUVDataToImage(VkImage *image, uint8_t *yuvData,
 	void *bufferData, int width, int height, VkBuffer stagingBuffer,
 	VkDeviceMemory stagingBufferMemory) {

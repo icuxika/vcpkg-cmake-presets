@@ -92,11 +92,12 @@ void Context::createInstance() {
 	createInfo.pApplicationInfo = &applicationInfo;
 
 	auto extensions = getRequiredExtensions();
-	extensions.push_back("VK_KHR_get_physical_device_properties2");
 #ifdef __APPLE__
 	// macos vkCreateInstance 返回 VK_ERROR_INCOMPATIBLE_DRIVER 的解决方式
 	createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 	extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	extensions.push_back("VK_KHR_get_physical_device_properties2");
+  DeviceExtensions.push_back("VK_KHR_portability_subset");
 #endif
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();

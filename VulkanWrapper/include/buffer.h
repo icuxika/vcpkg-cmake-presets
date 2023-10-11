@@ -30,6 +30,7 @@ class Buffer {
 	void createYUV420pImage();
 	void createYUV420pImageView();
 	void loadYUVData(uint8_t *yuvData);
+	void loadYUVData(std::vector<uint8_t> yuvData);
 	// yuv420p
 	VkImageView TextureImageView;
 	VkSampler TextureSampler;

@@ -50,7 +50,7 @@ class Context {
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 	std::vector<const char *> getRequiredExtensions();
-  bool checkValidationLayerSupport();
+	bool checkValidationLayerSupport();
 	void populateDebugMessengerCreateInfo(
 		VkDebugUtilsMessengerCreateInfoEXT &createInfo);
 	void setupDebugMessenger();
@@ -65,7 +65,7 @@ class Context {
 	const std::vector<const char *> ValidationLayers = {
 		"VK_LAYER_KHRONOS_validation"};
 
-	const std::vector<const char *> DeviceExtensions = {
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME, "VK_KHR_portability_subset"};
+	std::vector<const char *> DeviceExtensions = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 };
 } // namespace vw
