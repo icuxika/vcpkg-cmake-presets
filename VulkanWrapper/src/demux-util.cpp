@@ -1,5 +1,11 @@
 #include "demux-util.h"
 
+#ifndef __clang_major__
+char av_err[AV_ERROR_MAX_STRING_SIZE] = {0};
+#define av_err2str(errnum)                                                     \
+	av_make_error_string(av_err, AV_ERROR_MAX_STRING_SIZE, errnum)
+#endif
+
 namespace av {
 DemuxUtil::DemuxUtil() {}
 
@@ -279,7 +285,8 @@ void DemuxUtil::yuv2file(AVFrame *frame) {
 		(const uint8_t **)(frame->data), frame->linesize, PixFmt, Width,
 		Height);
 
-	// ffplay -f rawvideo -video_size 3840x2160 ~/Downloads/video_output_file
+	// ffplay -f rawvideo -video_size 3840x2160
+	// ~/Downloads/video_output_file
 	std::ofstream dstFile(
 		"/Users/icuxika/Downloads/video_output_file", std::ios::binary);
 	if (dstFile.is_open()) {
