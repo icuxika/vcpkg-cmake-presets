@@ -30,16 +30,12 @@ if(${Vulkan_FOUND})
     message(STATUS ">>> Windows")
   endif()
 
+  file(GLOB SOURCES "src/*.cpp")
   add_executable(
     VulkanWrapper
     main.cpp
-    src/context.cpp
-    src/swapchain.cpp
-    src/shader.cpp
-    src/render-process.cpp
-    src/render.cpp
-    src/buffer.cpp
-    src/demux-util.cpp)
+  ${SOURCES})
+
   target_link_libraries(VulkanWrapper PRIVATE Vulkan::Vulkan glfw glm
                                               cxxopts::cxxopts)
   target_include_directories(VulkanWrapper PRIVATE include)
@@ -51,10 +47,26 @@ if(${Vulkan_FOUND})
     target_include_directories(VulkanWrapper PRIVATE include)
   else()
     message(STATUS ">>> Windows")
-    target_include_directories(VulkanWrapper PRIVATE C:\\CommandLineTools\\ffmpeg-6.0-full_build-shared\\include)
-    target_link_directories(VulkanWrapper PRIVATE C:\\CommandLineTools\\ffmpeg-6.0-full_build-shared\\lib)
-    target_link_libraries(VulkanWrapper PRIVATE avcodec avdevice avfilter avformat avutil postproc swresample swscale)
+    target_include_directories(VulkanWrapper PRIVATE libffmpeg\\include)
+    target_link_directories(VulkanWrapper PRIVATE libffmpeg\\lib\\x64)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+      message(STATUS ">>> Windows MSVC")
+      target_link_libraries(VulkanWrapper PRIVATE libavcodec libavformat libavutil libswresample libswscale)
+    endif()
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+      # clang-cl 使用静态库有一些报错，暂时还不能解决，目前依旧使用导入库+动态库的方式
+      message(STATUS ">>> Windows Clang")
+      target_link_libraries(VulkanWrapper PRIVATE avcodec avdevice avfilter avformat avutil postproc swresample swscale)
+    endif()
   endif()
+
+  add_custom_command(TARGET VulkanWrapper PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                       ${CMAKE_SOURCE_DIR}/VulkanWrapper/shaders-bin/ $<TARGET_FILE_DIR:VulkanWrapper>/shaders)
+
+  add_custom_command(TARGET VulkanWrapper PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                       ${CMAKE_SOURCE_DIR}/VulkanWrapper/textures/ $<TARGET_FILE_DIR:VulkanWrapper>/textures)
 
   add_executable(VulkanDemo demo.cpp)
   target_link_libraries(VulkanDemo PRIVATE Vulkan::Vulkan glfw glm)
