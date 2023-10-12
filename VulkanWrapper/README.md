@@ -14,6 +14,13 @@ cd .\VulkanWrapper\
 cd ..
 ```
 
+#### 由于从 GitHub 下载可能需要配置 PowerShell VPN
+
+```
+$env:HTTP_PROXY = "http://127.0.0.1:7890"
+$env:HTTPS_PROXY = "http://127.0.0.1:7890"
+```
+
 ## shader 编译
 
 > cmake 构建时会自动拷贝该目录到可执行程序目录下
