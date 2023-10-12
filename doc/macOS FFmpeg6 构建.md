@@ -2,6 +2,8 @@
 
 > 参数来自于[Static builds for macOS 64-bit](https://evermeet.cx/ffmpeg/)
 
+> 一些依赖库问题可以参考 [Mac M1 编译 FFmpeg6.0](https://juejin.cn/post/7247044423023804476)
+
 ```
 ./configure --cc=/usr/bin/clang --prefix=/Users/icuxika/CommandLineTools/ffmpeg6 --extra-version=tessus --enable-avisynth --enable-fontconfig --enable-gpl --enable-libaom --enable-libass --enable-libbluray --enable-libdav1d --enable-libfreetype --enable-libgsm --enable-libmodplug --enable-libmp3lame --enable-libmysofa --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopus --enable-librubberband --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvmaf --enable-libvo-amrwbenc --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs --enable-libxvid --enable-libzimg --enable-libzmq --enable-libzvbi --enable-version3 --pkg-config-flags=--static --disable-ffplay
 ```
