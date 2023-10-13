@@ -54,7 +54,7 @@ cp -r ffmpeg-6.0 ffmpeg-6.0-shared
 
 #### ffmpeg static
 
-> 静态编译，目前编译出来的 ffmpeg.exe 依赖 libx264-164.dll，通过静态连接 libx264 失败了
+> 静态编译
 
 ```
 cd ffmpeg-6.0-static
