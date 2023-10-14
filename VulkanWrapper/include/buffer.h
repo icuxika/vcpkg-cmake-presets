@@ -32,16 +32,10 @@ class Buffer {
 	void loadYUVData(uint8_t *yuvData);
 	void loadYUVData(std::vector<uint8_t> yuvData);
 	// yuv420p
-	VkImageView TextureImageView;
-	VkSampler TextureSampler;
 	VkBuffer VertexBuffer;
 	VkBuffer IndexBuffer;
 	std::vector<VkBuffer> UniformBuffers;
 	std::vector<void *> UniformBuffersMapped;
-
-	void createTextureImage();
-	void createTextureImageView();
-	void createTextureSampler();
 
 	void createVertexBuffer();
 	void createIndexBuffer();
@@ -81,20 +75,10 @@ class Buffer {
 		VkDeviceMemory stagingBufferMemory);
 	// yuv420p
 
-	VkImage TextureImage;
-	VkDeviceMemory TextureImageMemory;
 	VkDeviceMemory VertexBufferMemory;
 	VkDeviceMemory IndexBufferMemory;
 	std::vector<VkDeviceMemory> UniformBuffersMemory;
-	VkDescriptorPool DescriptorPool;
-	std::vector<VkDescriptorSet> DescriptorSets;
-	std::vector<VkCommandBuffer> CommandBuffers;
 
-	VkImageView createImageView(VkImage image, VkFormat format);
-	void createImage(uint32_t width, uint32_t height, VkFormat format,
-		VkImageTiling tiling, VkImageUsageFlags usage,
-		VkMemoryPropertyFlags properties, VkImage &image,
-		VkDeviceMemory &imageMemory);
 	void transitionImageLayout(
 		VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout);
 	void copyBufferToImage(

@@ -62,9 +62,6 @@ void Context::initVkContext(GLFWwindow *window, int videoWidth, int videoHeight)
 	BufferContext->setupVideoSize(videoWidth, videoHeight);
 	BufferContext->createYUV420pImage();
 	BufferContext->createYUV420pImageView();
-	BufferContext->createTextureImage();
-	BufferContext->createTextureImageView();
-	BufferContext->createTextureSampler();
 	BufferContext->createVertexBuffer();
 	BufferContext->createIndexBuffer();
 	BufferContext->createUniformBuffers();
