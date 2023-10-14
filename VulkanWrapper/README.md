@@ -36,10 +36,10 @@ cd ..
 > 不需要在 Visual Studio 提供的命令行环境中运行，`链接的静态库，不用拷贝动态库到可执行程序目录下`
 
 ### 编译
+> 注意：如果使用静态库，那么Release模式和Debug模式不能链接同一个库，具体看[Windows 下 Debug 链接 FFmpeg PDB 文件.md](..%2Fdoc%2FWindows%20%E4%B8%8B%20Debug%20%E9%93%BE%E6%8E%A5%20FFmpeg%20PDB%20%E6%96%87%E4%BB%B6.md)
 
 ```
 cmake --preset windows-default-user
-cmake --build --preset windows-default-debug-user --target VulkanWrapper
 cmake --build --preset windows-default-release-user --target VulkanWrapper
 ```
 
