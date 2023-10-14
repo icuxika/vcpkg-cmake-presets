@@ -20,35 +20,35 @@ git clone https://github.com/microsoft/vcpkg
 # 不同平台构建
 ## Windows
 ```
-cp CMakeUserPresets.json.windows.template CMakeUserPresets.json
+cp .\cmake\CMakeUserPresets.json.windows.template .\CMakeUserPresets.json
 ```
 #### windows-default-user
 > 使用默认的 cl 编译器
 ```
 cmake --preset windows-default-user
-cmake --build --preset windows-default-debug-user
-cmake --build --preset windows-default-debug-user --target install
+cmake --build --preset windows-default-release-user
+cmake --build --preset windows-default-release-user --target install
 ```
 
 #### windows-clang-cl-user
-> 使用随 Visual Studio 安装 clang 编译器
+> 使用随 Visual Studio 安装的 clang 编译器
 ```
 cmake --preset windows-clang-cl-user
-cmake --build --preset windows-clang-cl-debug-user
-cmake --build --preset windows-clang-cl-debug-user --target install
+cmake --build --preset windows-clang-cl-release-user
+cmake --build --preset windows-clang-cl-release-user --target install
 ```
 
 #### windows-msys2-user
 > 使用 MSYS2 中的 编译器
 ```
 cmake --preset windows-msys2-user
-cmake --build --preset windows-msys2-debug-user
-cmake --build --preset windows-msys2-debug-user --target install
+cmake --build --preset windows-msys2-release-user
+cmake --build --preset windows-msys2-release-user --target install
 ```
 
 ## Ubuntu
 ```
-cp CMakeUserPresets.json.ubuntu.template CMakeUserPresets.json
+cp cmake/CMakeUserPresets.json.ubuntu.template CMakeUserPresets.json
 ```
 
 #### ubuntu-default
