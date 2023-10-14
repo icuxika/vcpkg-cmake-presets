@@ -1,7 +1,7 @@
 {
     "version": 4,
     "include": [
-        "CMakePresets.json"
+        "cmake/CMakePresets.json"
     ],
     "configurePresets": [
         {

@@ -4,3 +4,4 @@ CMakeUserPresets.json
 /out
 compile_commands.json
 /.cache
+/.vs
