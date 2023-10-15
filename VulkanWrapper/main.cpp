@@ -19,6 +19,8 @@ std::mutex yuvMutex;
 int main(int argc, char **argv) {
 	cxxopts::Options options("VulkanWrapper", "Yuv420P Player");
 	options.add_options()("f,file", "File name", cxxopts::value<std::string>())(
+		"m,mode", "Framerate limitation",
+		cxxopts::value<bool>()->default_value("false"))(
 		"h,help", "Print usage");
 	auto result = options.parse(argc, argv);
 	if (result.count("help") || !result.count("file")) {
@@ -26,16 +28,15 @@ int main(int argc, char **argv) {
 		exit(0);
 	}
 	auto filename = result["file"].as<std::string>();
-	std::cout << filename << std::endl;
-
-	using namespace std::chrono_literals;
+	std::cout << "文件路径 " << filename << std::endl;
 	const char *url = filename.c_str();
 
+	// 是否控制帧率与视频帧率一致
+	bool limitFramerate = result["mode"].as<bool>();
+
+	// FFmpeg 功能初始化
 	auto &demuxUtil = av::DemuxUtil::GetInstance();
 	demuxUtil.VideoHandler = [](AVFrame *frame) {
-		std::chrono::high_resolution_clock::time_point start =
-			std::chrono::high_resolution_clock::now();
-		// std::this_thread::sleep_for(70ms);
 		std::vector<uint8_t> buffer;
 		size_t bufferSize = frame->width * frame->height * 3 / 2;
 		buffer.resize(bufferSize);
@@ -56,54 +57,75 @@ int main(int argc, char **argv) {
 				buffer.begin() + frame->width * frame->height * 5 / 4 +
 					i * frame->width / 2);
 		}
-		std::chrono::high_resolution_clock::time_point end =
-			std::chrono::high_resolution_clock::now();
-		auto duration =
-			std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-				.count();
-		// std::cout << "[vedio] " << duration << std::endl;
 		std::lock_guard<std::mutex> lock(yuvMutex);
 		yuvDataList.push_back(buffer);
 	};
 	demuxUtil.AudioHandler = [](AVFrame *frame) {};
 	demuxUtil.openFile(url);
-	std::cout << "video width: " << demuxUtil.Width << std::endl;
-	std::cout << "video height: " << demuxUtil.Height << std::endl;
 
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	GLFWwindow *window =
 		glfwCreateWindow(1280, 720, "Vulkan Wrapper", nullptr, nullptr);
 
+	// Vulkan 初始化
 	vw::Context::GetInstance().initVkContext(
 		window, demuxUtil.Width, demuxUtil.Height);
 
+	// 键盘事件监听
 	glfwSetKeyCallback(window,
 		[](GLFWwindow *window, int key, int scancode, int action, int mods) {
 			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 				glfwSetWindowShouldClose(window, GLFW_TRUE);
 			}
 			if (key == GLFW_KEY_U && action == GLFW_PRESS) {
-				// vw::Context::GetInstance().BufferContext->loadYUVData();
 			}
 		});
+
+	// 窗口尺寸变化监听
 	glfwSetFramebufferSizeCallback(
 		window, [](GLFWwindow *window, int width, int height) {
 			vw::Context::GetInstance().FramebufferResized = true;
 		});
 
+	// 视频解码线程
 	std::thread t(&av::DemuxUtil::startDecode, &demuxUtil,
 		av::Type::VIDEO | av::Type::AUDIO);
 
+	long long targetFrameInterval = 1000000.0 / demuxUtil.VideoFrameRate;
+	std::cout << "帧间隔时间μs" << targetFrameInterval << std::endl;
 	while (!glfwWindowShouldClose(window)) {
+		// 帧开始时间
+		auto startFrameTime = std::chrono::high_resolution_clock::now();
+
 		glfwPollEvents();
 		std::lock_guard<std::mutex> lock(yuvMutex);
 		if (!yuvDataList.empty()) {
-      std::vector<uint8_t> data = yuvDataList.front();
+			std::vector<uint8_t> data = yuvDataList.front();
 			vw::Context::GetInstance().BufferContext->loadYUVData(data);
 			yuvDataList.pop_front();
 		}
 		vw::Context::GetInstance().RenderContext->drawFrame();
+
+		// 帧结束时间
+		auto endFrameTime = std::chrono::high_resolution_clock::now();
+		auto frameTime = std::chrono::duration_cast<std::chrono::microseconds>(
+			endFrameTime - startFrameTime)
+							 .count();
+		// 帧率控制，并不准确
+		if (limitFramerate && frameTime < targetFrameInterval) {
+			while (true) {
+				endFrameTime = std::chrono::high_resolution_clock::now();
+				frameTime =
+					std::chrono::duration_cast<std::chrono::microseconds>(
+						endFrameTime - startFrameTime)
+						.count();
+				if (frameTime >= targetFrameInterval) {
+					break;
+				}
+				continue;
+			}
+		}
 	}
 	vkDeviceWaitIdle(vw::Context::GetInstance().LogicalDevice);
 	glfwDestroyWindow(window);

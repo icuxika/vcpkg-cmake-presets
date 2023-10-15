@@ -33,6 +33,7 @@ class DemuxUtil {
 	bool EnableVideoDecode;
 	bool EnableAudioDecode;
 	int Width, Height;
+	double VideoFrameRate;
 
   private:
 	DemuxUtil();

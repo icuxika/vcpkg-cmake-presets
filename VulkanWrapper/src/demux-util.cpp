@@ -68,10 +68,14 @@ int DemuxUtil::openFile(const char *url) {
 				  << av_get_pix_fmt_name(
 						 (AVPixelFormat)VideoCodecContext->pix_fmt)
 				  << std::endl;
+		AVRational framerate = VideoCodecContext->framerate;
+		double fps = framerate.den == 0 ? 0: (double )framerate.num / framerate.den;
+		std::cout << "视频帧速率" << fps << std::endl;
 
 		Width = VideoCodecContext->width;
 		Height = VideoCodecContext->height;
 		PixFmt = VideoCodecContext->pix_fmt;
+		VideoFrameRate = fps;
 
 		// 存放解码后的一帧数据
 		ret = av_image_alloc(
