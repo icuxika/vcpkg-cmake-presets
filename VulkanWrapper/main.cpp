@@ -104,8 +104,8 @@ int main(int argc, char **argv) {
 			std::vector<uint8_t> data = yuvDataList.front();
 			vw::Context::GetInstance().BufferContext->loadYUVData(data);
 			yuvDataList.pop_front();
+			vw::Context::GetInstance().RenderContext->drawFrame();
 		}
-		vw::Context::GetInstance().RenderContext->drawFrame();
 
 		// 帧结束时间
 		auto endFrameTime = std::chrono::high_resolution_clock::now();
