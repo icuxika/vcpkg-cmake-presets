@@ -105,25 +105,26 @@ int main(int argc, char **argv) {
 			vw::Context::GetInstance().BufferContext->loadYUVData(data);
 			yuvDataList.pop_front();
 			vw::Context::GetInstance().RenderContext->drawFrame();
-		}
 
-		// 帧结束时间
-		auto endFrameTime = std::chrono::high_resolution_clock::now();
-		auto frameTime = std::chrono::duration_cast<std::chrono::microseconds>(
-			endFrameTime - startFrameTime)
-							 .count();
-		// 帧率控制，并不准确
-		if (limitFramerate && frameTime < targetFrameInterval) {
-			while (true) {
-				endFrameTime = std::chrono::high_resolution_clock::now();
-				frameTime =
-					std::chrono::duration_cast<std::chrono::microseconds>(
-						endFrameTime - startFrameTime)
-						.count();
-				if (frameTime >= targetFrameInterval) {
-					break;
+			// 帧结束时间
+			auto endFrameTime = std::chrono::high_resolution_clock::now();
+			auto frameTime =
+				std::chrono::duration_cast<std::chrono::microseconds>(
+					endFrameTime - startFrameTime)
+					.count();
+			// 帧率控制，并不准确
+			if (limitFramerate && frameTime < targetFrameInterval) {
+				while (true) {
+					endFrameTime = std::chrono::high_resolution_clock::now();
+					frameTime =
+						std::chrono::duration_cast<std::chrono::microseconds>(
+							endFrameTime - startFrameTime)
+							.count();
+					if (frameTime >= targetFrameInterval) {
+						break;
+					}
+					continue;
 				}
-				continue;
 			}
 		}
 	}
