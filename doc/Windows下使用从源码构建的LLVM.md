@@ -1,4 +1,4 @@
-# Windows下使用源码构建的 LLVM 来编译项目
+# Windows 下使用源码构建的 LLVM 来编译项目
 
 # Windows 下 llvm-project 源码构建
 
@@ -12,6 +12,7 @@ cd .\llvm-project\
 ```
 
 ## 编译
+
 > 构建失败记录：`-DLLVM_ENABLE_RUNTIMES="libc;libcxxabi;libcxx"` 指定此选项会在最后关头出错，暂时没找到解决方式，并且 Windows 下的一般环境也无法指定`-stdlib=libc++`
 
 > `-DCMAKE_CXX_FLAGS="/utf-8"`，`cl.exe`默认没有指定此编译器选项，这种情况下编译`llvm`会提示在`llvm-project\clang\lib\Lex\UnicodeCharSets.h`文件中存在莫名的错误，比如：`error C2143: 语法错误: 缺少“;”(在“{”的前面)`
@@ -19,6 +20,8 @@ cd .\llvm-project\
 ```
 cmake -S llvm -B build -G Ninja -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lldb;lld" -DCMAKE_INSTALL_PREFIX=C:\CommandLineTools\SourceInstall\llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_USE_LINKER=lld -DLLVM_PARALLEL_COMPILE_JOBS=12 -DLLVM_PARALLEL_LINK_JOBS=4 -DCMAKE_CXX_FLAGS="/utf-8"
 ```
+
+> 因为已经安装了 Visual Studio 携带的 clang-cl 工具集，所以可以指定`-DLLVM_USE_LINKER=lld`，如果电脑上不存在`lld`，需要移除此选项
 
 ```
 cmake --build build
@@ -113,6 +116,7 @@ Application     ninja.exe                                          0.0.0.0    C:
 ```
 
 # 编译
+
 ```
 cmake --preset windows-msys2-user
 cmake --build --preset windows-msys2-debug-user
