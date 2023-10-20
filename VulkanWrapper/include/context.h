@@ -7,6 +7,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include "render-process.h"
 #include <GLFW/glfw3.h>
+#include <cstring>
 #include <iostream>
 
 namespace vw {
