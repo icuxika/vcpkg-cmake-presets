@@ -7,13 +7,13 @@
         {
             "name": "ubuntu-default",
             "inherits": "default",
+            "generator": "Ninja Multi-Config",
             "binaryDir": "${sourceDir}/out/build/ubuntu-default",
             "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": {
-                    "value": "/home/icuxika/vcpkg/scripts/buildsystems/vcpkg.cmake",
-                    "type": "FILEPATH"
-                },
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/ubuntu-default"
+            },
+            "environment": {
+            	"VCPKG_ROOT": "/home/icuxika/vcpkg"
             }
         },
         {
