@@ -1,4 +1,5 @@
 # 基于 Vulkan 的 Yuv420P 播放器
+> `demo-shaders`相关的文件和文件夹用于`vulkan-tutorial`相关几个demo应用
 
 ## 下载 Vulkan SDK
 
