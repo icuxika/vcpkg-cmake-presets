@@ -20,4 +20,5 @@ install(TARGETS ${PROJECT_NAME}
 add_subdirectory(Algorithms)
 add_subdirectory(SingleFilePrograms)
 add_subdirectory(VulkanWrapper)
+add_subdirectory(WebUI)
 add_subdirectory(WrapperLib2C)
