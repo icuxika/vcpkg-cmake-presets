@@ -1,5 +1,6 @@
 #pragma once
 
+#include "macros.h"
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -14,11 +15,6 @@ extern "C" {
 #include <libavutil/pixfmt.h>
 #include <libswscale/swscale.h>
 }
-
-#define PRINTLN(...)                                                           \
-	do {                                                                       \
-		std::cout << "[" << __FUNCTION__ << "] " << __VA_ARGS__ << std::endl;  \
-	} while (false)
 
 namespace av {
 enum Type { VIDEO = 1, AUDIO = 2 };

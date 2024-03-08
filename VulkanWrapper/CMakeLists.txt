@@ -47,8 +47,4 @@ if (${Vulkan_FOUND})
     add_executable(VulkanTriangleImGuiDemo vulkan-tutorial-triangle-imgui-demo.cpp)
     target_link_libraries(VulkanTriangleImGuiDemo PRIVATE Vulkan::Vulkan glfw glm imgui::imgui GPUOpen::VulkanMemoryAllocator)
     # target_include_directories(VulkanTriangleImGuiDemo PRIVATE ../ThirdPartyLibs/ImGUIExplore)
-
-    add_executable(alphaFFmpegDemo alpha-ffmpeg-demo.cpp)
-    target_include_directories(alphaFFmpegDemo PRIVATE "${PROJECT_SOURCE_DIR}/FFmpegLib")
-    target_link_libraries(alphaFFmpegDemo PRIVATE alpha-ffmpeg)
 endif (${Vulkan_FOUND})

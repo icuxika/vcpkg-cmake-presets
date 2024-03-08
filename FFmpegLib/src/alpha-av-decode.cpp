@@ -18,8 +18,7 @@ int AlphaAVDecode::enableHwDeviceSupport(const char *type) {
 		PRINTLN("下面是支持的硬件设备");
 		while ((HWDeviceType = av_hwdevice_iterate_types(HWDeviceType)) !=
 			AV_HWDEVICE_TYPE_NONE) {
-			std::cout << "->" << av_hwdevice_get_type_name(HWDeviceType)
-					  << std::endl;
+			PRINTLN("->" << av_hwdevice_get_type_name(HWDeviceType));
 		}
 		EnableHwDecode = false;
 		return -1;
@@ -245,12 +244,13 @@ int AlphaAVDecode::decodePacket(AVCodecContext *codecContext,
 int AlphaAVDecode::outputVideoFrame(AVFrame *frame) {
 	VideoFrameCount++;
 	if (VideoFrameCount == 100 & frame->width > 0) {
-		std::cout << "(pts: " << frame->pts << ")->("
-				  << av_get_pix_fmt_name((AVPixelFormat)frame->format) << ")->["
-				  << frame->width << "," << frame->height << "]"
-				  << " linesize1: " << frame->linesize[0]
-				  << " linesize2: " << frame->linesize[1]
-				  << " linesize3: " << frame->linesize[2] << std::endl;
+		PRINTLN("(pts: " << frame->pts << ")->("
+						 << av_get_pix_fmt_name((AVPixelFormat)frame->format)
+						 << ")->[" << frame->width << "," << frame->height
+						 << "]"
+						 << " linesize1: " << frame->linesize[0]
+						 << " linesize2: " << frame->linesize[1]
+						 << " linesize3: " << frame->linesize[2]);
 	}
 	VideoHandler(frame);
 	return 0;

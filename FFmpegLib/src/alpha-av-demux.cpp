@@ -18,26 +18,25 @@ int AlphaAVDemux::openFile(const char *url) {
 	// 打开视频文件流，读取文件头的一些信息
 	ret = avformat_open_input(&FormatContext, url, nullptr, &options);
 	if (ret < 0) {
-		std::cout << "无法打开文件" << std::endl;
+		PRINTLN("无法打开文件");
 		return ret;
 	}
 	// 获取流信息
 	ret = avformat_find_stream_info(FormatContext, nullptr);
 	if (ret < 0) {
-		std::cout << "无法获取流信息" << std::endl;
+		PRINTLN("无法获取流信息");
 		return ret;
 	}
 	// 打印视频流信息
 	av_dump_format(FormatContext, 0, url, 0);
 
-	std::cout << "------------------------------------------------------"
-			  << std::endl;
+	PRINTLN("------------------------------------------------------");
 	// 获取总时长（毫秒）
 	TotalMilliseconds = FormatContext->duration / (AV_TIME_BASE / 1000);
-	std::cout << "视频总时长（毫秒）" << TotalMilliseconds << std::endl;
+	PRINTLN("视频总时长（毫秒）" << TotalMilliseconds);
 	// 获取总时长（秒）
 	int totalSeconds = FormatContext->duration / AV_TIME_BASE;
-	std::cout << "视频总时长（秒）" << totalSeconds << std::endl;
+	PRINTLN("视频总时长（秒）" << totalSeconds);
 	return ret;
 }
 } // namespace av
