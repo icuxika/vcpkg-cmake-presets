@@ -9,30 +9,6 @@ if (${Vulkan_FOUND})
     find_package(imgui CONFIG REQUIRED)
     find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 
-    if (UNIX AND APPLE)
-        message(STATUS ">>> macOS")
-        find_package(PkgConfig REQUIRED)
-        set(ENV{PKG_CONFIG_PATH}
-                "/Users/icuxika/CommandLineTools/ffmpeg6/lib/pkgconfig")
-
-        pkg_check_modules(
-                ffmpeg
-                REQUIRED
-                IMPORTED_TARGET
-                libavcodec
-                libavdevice
-                libavfilter
-                libavformat
-                libavutil
-                libpostproc
-                libswresample
-                libswscale)
-    elseif (UNIX)
-        message(STATUS ">>> Linux")
-    else ()
-        message(STATUS ">>> Windows")
-    endif ()
-
     file(GLOB SOURCES "src/*.cpp")
     add_executable(
             VulkanWrapper
@@ -43,29 +19,8 @@ if (${Vulkan_FOUND})
             cxxopts::cxxopts imgui::imgui)
     target_include_directories(VulkanWrapper PRIVATE include)
     target_include_directories(VulkanWrapper PRIVATE ${Stb_INCLUDE_DIR})
-
-    if (UNIX AND APPLE)
-        message(STATUS ">>> macOS")
-        target_link_libraries(VulkanWrapper PRIVATE PkgConfig::ffmpeg)
-    elseif (UNIX)
-        message(STATUS ">>> Linux")
-        target_include_directories(VulkanWrapper PRIVATE /usr/include/x86_64-linux-gnu)
-        target_link_directories(VulkanWrapper PRIVATE /usr/lib/x86_64-linux-gnu)
-        target_link_libraries(VulkanWrapper PRIVATE avcodec avdevice avfilter avformat avutil postproc swresample swscale)
-    else ()
-        message(STATUS ">>> Windows")
-        target_include_directories(VulkanWrapper PRIVATE libffmpeg\\include)
-        target_link_directories(VulkanWrapper PRIVATE libffmpeg\\lib\\x64)
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-            message(STATUS ">>> Windows MSVC")
-            target_link_libraries(VulkanWrapper PRIVATE libavcodec libavformat libavutil libswresample libswscale)
-        endif ()
-        if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-            # clang-cl 使用静态库有一些报错，暂时还不能解决，目前依旧使用导入库+动态库的方式
-            message(STATUS ">>> Windows Clang")
-            target_link_libraries(VulkanWrapper PRIVATE avcodec avdevice avfilter avformat avutil postproc swresample swscale)
-        endif ()
-    endif ()
+    target_include_directories(VulkanWrapper PRIVATE "${PROJECT_SOURCE_DIR}/FFmpegLib")
+    target_link_libraries(VulkanWrapper PRIVATE alpha-ffmpeg)
 
     add_custom_command(TARGET VulkanWrapper PRE_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -92,4 +47,8 @@ if (${Vulkan_FOUND})
     add_executable(VulkanTriangleImGuiDemo vulkan-tutorial-triangle-imgui-demo.cpp)
     target_link_libraries(VulkanTriangleImGuiDemo PRIVATE Vulkan::Vulkan glfw glm imgui::imgui GPUOpen::VulkanMemoryAllocator)
     # target_include_directories(VulkanTriangleImGuiDemo PRIVATE ../ThirdPartyLibs/ImGUIExplore)
+
+    add_executable(alphaFFmpegDemo alpha-ffmpeg-demo.cpp)
+    target_include_directories(alphaFFmpegDemo PRIVATE "${PROJECT_SOURCE_DIR}/FFmpegLib")
+    target_link_libraries(alphaFFmpegDemo PRIVATE alpha-ffmpeg)
 endif (${Vulkan_FOUND})

@@ -18,6 +18,7 @@ install(TARGETS ${PROJECT_NAME}
         DESTINATION Release/bin)
 
 add_subdirectory(Algorithms)
+add_subdirectory(FFmpegLib)
 add_subdirectory(SingleFilePrograms)
 add_subdirectory(VulkanWrapper)
 add_subdirectory(WebUI)

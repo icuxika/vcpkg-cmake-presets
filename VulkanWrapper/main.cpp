@@ -2,8 +2,8 @@
 #include <thread>
 #include <utility>
 #define GLFW_INCLUDE_VULKAN
+#include "alpha-av-core.h"
 #include "context.h"
-#include "demux-util.h"
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include <cxxopts.hpp>
@@ -35,33 +35,64 @@ int main(int argc, char **argv) {
 	bool limitFramerate = result["mode"].as<bool>();
 
 	// FFmpeg 功能初始化
-	auto &demuxUtil = av::DemuxUtil::GetInstance();
-	demuxUtil.VideoHandler = [](AVFrame *frame) {
-		std::vector<uint8_t> buffer;
-		size_t bufferSize = frame->width * frame->height * 3 / 2;
-		buffer.resize(bufferSize);
-		for (int i = 0; i < frame->height; i++) {
-			std::copy(frame->data[0] + i * frame->linesize[0],
-				frame->data[0] + i * frame->linesize[0] + frame->width,
-				buffer.begin() + i * frame->width);
+	auto &alphaAvCore = av::AlphaAVCore::GetInstance();
+	alphaAvCore.AlphaAVDecodeContext->VideoHandler = [](AVFrame *frame) {
+		if ((AVPixelFormat)frame->format == AV_PIX_FMT_YUV420P) {
+			std::vector<uint8_t> buffer;
+			size_t bufferSize = frame->width * frame->height * 3 / 2;
+			buffer.resize(bufferSize);
+			for (int i = 0; i < frame->height; i++) {
+				std::copy(frame->data[0] + i * frame->linesize[0],
+					frame->data[0] + i * frame->linesize[0] + frame->width,
+					buffer.begin() + i * frame->width);
+			}
+			for (int i = 0; i < frame->height / 2; i++) {
+				std::copy(frame->data[1] + i * frame->linesize[1],
+					frame->data[1] + i * frame->linesize[1] + frame->width / 2,
+					buffer.begin() + frame->width * frame->height +
+						i * frame->width / 2);
+			}
+			for (int i = 0; i < frame->height / 2; i++) {
+				std::copy(frame->data[2] + i * frame->linesize[2],
+					frame->data[2] + i * frame->linesize[2] + frame->width / 2,
+					buffer.begin() + frame->width * frame->height * 5 / 4 +
+						i * frame->width / 2);
+			}
+			std::lock_guard<std::mutex> lock(yuvMutex);
+			yuvDataList.push_back(buffer);
 		}
-		for (int i = 0; i < frame->height / 2; i++) {
-			std::copy(frame->data[1] + i * frame->linesize[1],
-				frame->data[1] + i * frame->linesize[1] + frame->width / 2,
-				buffer.begin() + frame->width * frame->height +
-					i * frame->width / 2);
+		if ((AVPixelFormat)frame->format == AV_PIX_FMT_NV12) {
+			std::vector<uint8_t> buffer;
+			size_t bufferSize = frame->width * frame->height * 3 / 2;
+			buffer.resize(bufferSize);
+
+			for (int i = 0; i < frame->height; i++) {
+				std::copy(frame->data[0] + i * frame->linesize[0],
+					frame->data[0] + i * frame->linesize[0] + frame->width,
+					buffer.begin() + i * frame->width);
+			}
+
+			uint8_t *uData = frame->data[1];
+			uint8_t *vData = frame->data[1] + 1;
+			int uvLineSize = frame->linesize[1];
+
+			for (int i = 0; i < frame->height / 2; i++) {
+				for (int j = 0; j < frame->width / 2; j++) {
+					buffer[frame->width * frame->height + i * frame->width / 2 +
+						j] = uData[i * uvLineSize + j * 2];
+					buffer[frame->width * frame->height +
+						frame->width * frame->height / 4 +
+						i * frame->width / 2 + j] =
+						vData[i * uvLineSize + j * 2];
+				}
+			}
+			std::lock_guard<std::mutex> lock(yuvMutex);
+			yuvDataList.push_back(buffer);
 		}
-		for (int i = 0; i < frame->height / 2; i++) {
-			std::copy(frame->data[2] + i * frame->linesize[2],
-				frame->data[2] + i * frame->linesize[2] + frame->width / 2,
-				buffer.begin() + frame->width * frame->height * 5 / 4 +
-					i * frame->width / 2);
-		}
-		std::lock_guard<std::mutex> lock(yuvMutex);
-		yuvDataList.push_back(buffer);
 	};
-	demuxUtil.AudioHandler = [](AVFrame *frame) {};
-	demuxUtil.openFile(url);
+	alphaAvCore.AlphaAVDecodeContext->AudioHandler = [](AVFrame *frame) {};
+	alphaAvCore.AlphaAVDecodeContext->EnableHwDecode = true;
+	alphaAvCore.openFile(url);
 
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -69,8 +100,9 @@ int main(int argc, char **argv) {
 		glfwCreateWindow(1280, 720, "Vulkan Wrapper", nullptr, nullptr);
 
 	// Vulkan 初始化
-	vw::Context::GetInstance().initVkContext(
-		window, demuxUtil.Width, demuxUtil.Height);
+	vw::Context::GetInstance().initVkContext(window,
+		alphaAvCore.AlphaAVDecodeContext->Width,
+		alphaAvCore.AlphaAVDecodeContext->Height);
 
 	// 键盘事件监听
 	glfwSetKeyCallback(window,
@@ -89,10 +121,10 @@ int main(int argc, char **argv) {
 		});
 
 	// 视频解码线程
-	std::thread t(&av::DemuxUtil::startDecode, &demuxUtil,
-		av::Type::VIDEO | av::Type::AUDIO);
+	std::thread t(&av::AlphaAVCore::play, &alphaAvCore);
 
-	long long targetFrameInterval = 1000000.0 / demuxUtil.VideoFrameRate;
+	long long targetFrameInterval =
+		1000000.0 / alphaAvCore.AlphaAVDecodeContext->VideoFrameRate;
 	std::cout << "帧间隔时间μs" << targetFrameInterval << std::endl;
 	while (!glfwWindowShouldClose(window)) {
 		// 帧开始时间
