@@ -19,8 +19,12 @@ if (${Vulkan_FOUND})
             cxxopts::cxxopts imgui::imgui)
     target_include_directories(VulkanWrapper PRIVATE include)
     target_include_directories(VulkanWrapper PRIVATE ${Stb_INCLUDE_DIR})
-    target_include_directories(VulkanWrapper PRIVATE "${PROJECT_SOURCE_DIR}/FFmpegLib")
-    target_link_libraries(VulkanWrapper PRIVATE alpha-ffmpeg)
+    # -----> FFmpegLib
+    target_include_directories(VulkanWrapper PRIVATE ..\\FFmpegLib\\include)
+    target_include_directories(VulkanWrapper PRIVATE ..\\FFmpegLib\\libffmpeg\\include)
+    target_link_directories(VulkanWrapper PRIVATE ..\\out\\build\\windows-default\\FFmpegLib\\Release)
+    target_link_libraries(VulkanWrapper PRIVATE alpha-ffmpeg-static-all)
+    # -----> FFmpegLib
 
     add_custom_command(TARGET VulkanWrapper PRE_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory

@@ -1,11 +1,9 @@
 #include <string>
 #include <thread>
-#include <utility>
 #define GLFW_INCLUDE_VULKAN
 #include "alpha-av-core.h"
 #include "context.h"
 #include <GLFW/glfw3.h>
-#include <chrono>
 #include <cxxopts.hpp>
 #include <fstream>
 #include <iostream>
@@ -36,61 +34,13 @@ int main(int argc, char **argv) {
 
 	// FFmpeg 功能初始化
 	auto &alphaAvCore = av::AlphaAVCore::GetInstance();
-	alphaAvCore.AlphaAVDecodeContext->VideoHandler = [](AVFrame *frame) {
-		if ((AVPixelFormat)frame->format == AV_PIX_FMT_YUV420P) {
-			std::vector<uint8_t> buffer;
-			size_t bufferSize = frame->width * frame->height * 3 / 2;
-			buffer.resize(bufferSize);
-			for (int i = 0; i < frame->height; i++) {
-				std::copy(frame->data[0] + i * frame->linesize[0],
-					frame->data[0] + i * frame->linesize[0] + frame->width,
-					buffer.begin() + i * frame->width);
-			}
-			for (int i = 0; i < frame->height / 2; i++) {
-				std::copy(frame->data[1] + i * frame->linesize[1],
-					frame->data[1] + i * frame->linesize[1] + frame->width / 2,
-					buffer.begin() + frame->width * frame->height +
-						i * frame->width / 2);
-			}
-			for (int i = 0; i < frame->height / 2; i++) {
-				std::copy(frame->data[2] + i * frame->linesize[2],
-					frame->data[2] + i * frame->linesize[2] + frame->width / 2,
-					buffer.begin() + frame->width * frame->height * 5 / 4 +
-						i * frame->width / 2);
-			}
+	av::AlphaAVCore::GetInstance().AlphaAVDecodeContext->VideoDataHandler =
+		[](std::vector<uint8_t> buffer) {
 			std::lock_guard<std::mutex> lock(yuvMutex);
 			yuvDataList.push_back(buffer);
-		}
-		if ((AVPixelFormat)frame->format == AV_PIX_FMT_NV12) {
-			std::vector<uint8_t> buffer;
-			size_t bufferSize = frame->width * frame->height * 3 / 2;
-			buffer.resize(bufferSize);
-
-			for (int i = 0; i < frame->height; i++) {
-				std::copy(frame->data[0] + i * frame->linesize[0],
-					frame->data[0] + i * frame->linesize[0] + frame->width,
-					buffer.begin() + i * frame->width);
-			}
-
-			uint8_t *uData = frame->data[1];
-			uint8_t *vData = frame->data[1] + 1;
-			int uvLineSize = frame->linesize[1];
-
-			for (int i = 0; i < frame->height / 2; i++) {
-				for (int j = 0; j < frame->width / 2; j++) {
-					buffer[frame->width * frame->height + i * frame->width / 2 +
-						j] = uData[i * uvLineSize + j * 2];
-					buffer[frame->width * frame->height +
-						frame->width * frame->height / 4 +
-						i * frame->width / 2 + j] =
-						vData[i * uvLineSize + j * 2];
-				}
-			}
-			std::lock_guard<std::mutex> lock(yuvMutex);
-			yuvDataList.push_back(buffer);
-		}
-	};
-	alphaAvCore.AlphaAVDecodeContext->AudioHandler = [](AVFrame *frame) {};
+		};
+	alphaAvCore.AlphaAVDecodeContext->AudioDataHandler =
+		[](std::vector<uint8_t> buffer) {};
 	alphaAvCore.AlphaAVDecodeContext->EnableHwDecode = true;
 	alphaAvCore.openFile(url);
 

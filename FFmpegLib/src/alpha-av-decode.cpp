@@ -252,11 +252,65 @@ int AlphaAVDecode::outputVideoFrame(AVFrame *frame) {
 						 << " linesize2: " << frame->linesize[1]
 						 << " linesize3: " << frame->linesize[2]);
 	}
-	VideoHandler(frame);
+
+	if ((AVPixelFormat)frame->format == AV_PIX_FMT_YUV420P) {
+		std::vector<uint8_t> buffer;
+		size_t bufferSize = frame->width * frame->height * 3 / 2;
+		buffer.resize(bufferSize);
+		for (int i = 0; i < frame->height; i++) {
+			std::copy(frame->data[0] + i * frame->linesize[0],
+				frame->data[0] + i * frame->linesize[0] + frame->width,
+				buffer.begin() + i * frame->width);
+		}
+		for (int i = 0; i < frame->height / 2; i++) {
+			std::copy(frame->data[1] + i * frame->linesize[1],
+				frame->data[1] + i * frame->linesize[1] + frame->width / 2,
+				buffer.begin() + frame->width * frame->height +
+					i * frame->width / 2);
+		}
+		for (int i = 0; i < frame->height / 2; i++) {
+			std::copy(frame->data[2] + i * frame->linesize[2],
+				frame->data[2] + i * frame->linesize[2] + frame->width / 2,
+				buffer.begin() + frame->width * frame->height * 5 / 4 +
+					i * frame->width / 2);
+		}
+		outputVideoData(buffer);
+	}
+	if ((AVPixelFormat)frame->format == AV_PIX_FMT_NV12) {
+		std::vector<uint8_t> buffer;
+		size_t bufferSize = frame->width * frame->height * 3 / 2;
+		buffer.resize(bufferSize);
+
+		for (int i = 0; i < frame->height; i++) {
+			std::copy(frame->data[0] + i * frame->linesize[0],
+				frame->data[0] + i * frame->linesize[0] + frame->width,
+				buffer.begin() + i * frame->width);
+		}
+
+		uint8_t *uData = frame->data[1];
+		uint8_t *vData = frame->data[1] + 1;
+		int uvLineSize = frame->linesize[1];
+
+		for (int i = 0; i < frame->height / 2; i++) {
+			for (int j = 0; j < frame->width / 2; j++) {
+				buffer[frame->width * frame->height + i * frame->width / 2 +
+					j] = uData[i * uvLineSize + j * 2];
+				buffer[frame->width * frame->height +
+					frame->width * frame->height / 4 + i * frame->width / 2 +
+					j] = vData[i * uvLineSize + j * 2];
+			}
+		}
+		outputVideoData(buffer);
+	}
 	return 0;
 }
-int AlphaAVDecode::outputAudioFrame(AVFrame *frame) {
-	AudioHandler(frame);
+int AlphaAVDecode::outputAudioFrame(AVFrame *frame) { return 0; }
+int AlphaAVDecode::outputVideoData(std::vector<uint8_t> buffer) {
+	VideoDataHandler(buffer);
+	return 0;
+}
+int AlphaAVDecode::outputAudioData(std::vector<uint8_t> buffer) {
+	AudioDataHandler(buffer);
 	return 0;
 }
 } // namespace av

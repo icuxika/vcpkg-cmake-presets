@@ -4,6 +4,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <vector>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -19,8 +20,8 @@ extern "C" {
 namespace av {
 enum Type { VIDEO = 1, AUDIO = 2 };
 
-using VideoHandlerFunction = std::function<void(AVFrame *)>;
-using AudioHandlerFunction = std::function<void(AVFrame *)>;
+using VideoDataHandlerFunction = std::function<void(std::vector<uint8_t>)>;
+using AudioDataHandlerFunction = std::function<void(std::vector<uint8_t>)>;
 
 class AlphaAVDecode {
   public:
@@ -54,13 +55,15 @@ class AlphaAVDecode {
 		AVFrame *frame, AVFrame *hwFrame);
 	int outputVideoFrame(AVFrame *frame);
 	int outputAudioFrame(AVFrame *frame);
+	int outputVideoData(std::vector<uint8_t> buffer);
+	int outputAudioData(std::vector<uint8_t> buffer);
 	AVPacket *Packet;
 	AVFrame *Frame;
 	AVFrame *HwFrame;
 	int VideoFrameCount = 0;
 
-	VideoHandlerFunction VideoHandler;
-	AudioHandlerFunction AudioHandler;
+	VideoDataHandlerFunction VideoDataHandler;
+	AudioDataHandlerFunction AudioDataHandler;
 
   private:
 	int openCodecContext(AVFormatContext *formatContext, int *streamIndex,
