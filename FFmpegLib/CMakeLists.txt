@@ -83,5 +83,5 @@ install(TARGETS ${LIB_NAME}
 )
 
 add_executable(FFmpegLibMain main.cpp)
-target_include_directories(FFmpegLibMain PUBLIC "${PROJECT_SOURCE_DIR}/FFmpegLib")
+#target_include_directories(FFmpegLibMain PUBLIC "${PROJECT_SOURCE_DIR}/FFmpegLib")
 target_link_libraries(FFmpegLibMain PUBLIC ${LIB_STATIC_NAME})
