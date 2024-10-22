@@ -49,7 +49,7 @@ elseif (UNIX)
 else ()
     message(STATUS ">>> Windows")
     target_include_directories(${LIB_NAME} PUBLIC libffmpeg\\include)
-    target_link_directories(${LIB_NAME} PUBLIC libffmpeg\\lib\\x64)
+    target_link_directories(${LIB_NAME} PUBLIC libffmpeg\\lib\\x64\\Customized)
 
     target_include_directories(${LIB_STATIC_NAME} PUBLIC libffmpeg\\include)
     target_link_directories(${LIB_STATIC_NAME} PUBLIC libffmpeg\\lib\\x64\\Customized)
@@ -57,16 +57,12 @@ else ()
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         message(STATUS ">>> Windows MSVC")
         target_link_libraries(${LIB_NAME} PUBLIC libavcodec libavformat libavutil libswresample libswscale)
-
-        # lib.exe /OUT:alpha-ffmpeg-static-all.lib .\alpha-ffmpeg-static.lib ..\..\..\..\..\FFmpegLib\libffmpeg\lib\x64\Customized\libavcodec.lib ..\..\..\..\..\FFmpegLib\libffmpeg\lib\x64\Customized\libavformat.lib ..\..\..\..\..\FFmpegLib\libffmpeg\lib\x64\Customized\libavutil.lib ..\..\..\..\..\FFmpegLib\libffmpeg\lib\x64\Customized\libswresample.lib ..\..\..\..\..\FFmpegLib\libffmpeg\lib\x64\Customized\libswscale.lib
         target_link_libraries(${LIB_STATIC_NAME} PUBLIC libavcodec libavformat libavutil libswresample libswscale)
     endif ()
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        # clang-cl 使用静态库有一些报错，暂时还不能解决，目前依旧使用导入库+动态库的方式
         message(STATUS ">>> Windows Clang")
-        target_link_libraries(${LIB_NAME} PUBLIC avcodec avdevice avfilter avformat avutil postproc swresample swscale)
-
-        target_link_libraries(${LIB_STATIC_NAME} PUBLIC avcodec avdevice avfilter avformat avutil postproc swresample swscale)
+        target_link_libraries(${LIB_NAME} PUBLIC libavcodec libavformat libavutil libswresample libswscale)
+        target_link_libraries(${LIB_STATIC_NAME} PUBLIC libavcodec libavformat libavutil libswresample libswscale)
     endif ()
 endif ()
 
