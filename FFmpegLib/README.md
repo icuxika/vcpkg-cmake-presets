@@ -10,7 +10,7 @@ New-Item -ItemType Directory -Path .\libffmpeg\lib\x64\Debug
 Get-ChildItem -Path C:\Users\icuxika\VSCodeProjects\FFmpegWindowsBuild\msvc\lib\x64\ | Where-Object { $_.Name -match "(avcodec|avdevice|avfilter|avformat|avutil|postproc|swresample|swscale).*[d]\.(lib|pdb)$" } | ForEach-Object { Copy-Item -Path $_.FullName -Destination .\libffmpeg\lib\x64\Debug }
 ```
 
-## 构建
+## 构建出静态库
 > `win-ffmpeg-static-download.ps1`下载的库的静态版本不支持Clang，而通过`FFmpegWindowsBuild`自行构建的静态库支持Clang
 ### MSVC 构建（Release）
 ```shell
@@ -23,3 +23,28 @@ cmake --build --preset windows-default-release-user --target alpha-ffmpeg-static
 cmake --preset windows-clang-cl-user
 cmake --build --preset windows-clang-cl-release-user --target alpha-ffmpeg-static
 ```
+
+## 构建出导入库+动态库
+### MSVC 构建（Release）
+```shell
+cmake --preset windows-default-user
+cmake --build --preset windows-default-release-user --target alpha-ffmpeg
+```
+
+### Clang 构建（Release）
+```shell
+cmake --preset windows-clang-cl-user
+cmake --build --preset windows-clang-cl-release-user --target alpha-ffmpeg
+```
+
+## VulkanWrapper 使用
+### 静态库
+```cmake
+target_link_libraries(VulkanWrapper PRIVATE alpha-ffmpeg-static)
+```
+
+### 导入库+动态库
+```cmake
+target_link_libraries(VulkanWrapper PRIVATE alpha-ffmpeg)
+```
+构建完成后，拷贝`alpha-ffmpeg.dll`到`VulkanWrapper.exe`所在目录
