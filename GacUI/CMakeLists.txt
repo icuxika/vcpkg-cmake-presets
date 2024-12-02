@@ -1,5 +1,5 @@
 if (WIN32)
-    file(GLOB LIB_SOURCES
+    file(GLOB GacUILite_SOURCES
             "Lib/Release/Import/Skins/DarkSkin/DarkSkin.cpp"
             "Lib/Release/Import/Skins/DarkSkin/DarkSkin.h"
             "Lib/Release/Import/GacUI.cpp"
@@ -25,10 +25,15 @@ if (WIN32)
     )
 endif ()
 
+add_library(GacUILite STATIC WinMain.cpp ${GacUILite_SOURCES})
+target_include_directories(GacUILite PUBLIC Lib/Release/Import)
+target_compile_definitions(GacUILite PUBLIC VCZH_DEBUG_NO_REFLECTION UNICODE _UNICODE)
+target_compile_options(GacUILite PUBLIC /bigobj)
+
 file(GLOB UI_SOURCES "UI/Source/*.cpp")
-add_executable(GacUIHelloWorld WIN32 main.cpp WinMain.cpp ${LIB_SOURCES} ${UI_SOURCES})
-target_include_directories(GacUIHelloWorld PRIVATE Lib/Release/Import)
+add_executable(GacUIHelloWorld WIN32 main.cpp ${UI_SOURCES})
 target_include_directories(GacUIHelloWorld PRIVATE UI/Source)
+target_link_libraries(GacUIHelloWorld GacUILite)
 target_compile_definitions(GacUIHelloWorld PRIVATE VCZH_DEBUG_NO_REFLECTION UNICODE _UNICODE)
 target_compile_options(GacUIHelloWorld PRIVATE /bigobj)
 add_custom_command(TARGET GacUIHelloWorld PRE_BUILD
