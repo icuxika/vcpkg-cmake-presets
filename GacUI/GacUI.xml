@@ -1,1 +1,3 @@
-<GacUI/>
+<GacUI>
+    <Exclude Pattern="Lib"/>
+</GacUI>

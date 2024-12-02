@@ -13,9 +13,19 @@
             <Instance ref.CodeBehind="false" ref.Class="helloworld::MainWindow">
                 <Window Text="Hello, world!" ClientSize="x:480 y:320">
                     <att.BoundsComposition-set PreferredMinSize="x:480 y:320"/>
-                    <Label Text="Welcome to GacUI Library!">
-                        <att.Font>fontFamily:"Segoe UI" size:32 antialias:true</att.Font>
-                    </Label>
+                    <Flow AlignmentToParent="left:0 top:0 right:0 bottom:0"
+                          MinSizeLimitation="LimitToElementAndChildren">
+                        <FlowItem>
+                            <Label Text="Welcome to GacUI Library!">
+                                <att.Font>fontFamily:"Segoe UI" size:32 antialias:true</att.Font>
+                            </Label>
+                        </FlowItem>
+                        <FlowItem>
+                            <Label Text="你好，世界！">
+                                <att.Font>fontFamily:"STKaiti" size:32 antialias:true</att.Font>
+                            </Label>
+                        </FlowItem>
+                    </Flow>
                 </Window>
             </Instance>
         </Instance>

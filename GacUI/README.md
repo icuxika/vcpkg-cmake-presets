@@ -15,7 +15,7 @@ MSBuild.exe .\Lib\Release\Tools\Executables\Executables.sln -p:Configuration=Rel
 
 ## 生成
 
-> 注意：当前会扫描不只`GacUI.xml`这个文件，还会扫描其他位置的UI文件，具体用法还需要确定
+> `GacUI.xml` -> `<Exclude Pattern="Lib"/>`避免扫描`Lib`下的UI xml文件
 
 ```
 .\Lib\Release\Tools\GacBuild.ps1 -FileName .\GacUI.xml
