@@ -3,6 +3,7 @@
 namespace av {
 AlphaAVDecode::AlphaAVDecode() {}
 AlphaAVDecode::~AlphaAVDecode() {
+	swr_free(&SwrCtx);
 	av_packet_free(&Packet);
 	av_frame_free(&Frame);
 	av_frame_free(&HwFrame);
@@ -48,8 +49,19 @@ int AlphaAVDecode::openVideoCodecContext(AVFormatContext *formatContext) {
 	return -1;
 }
 int AlphaAVDecode::openAudioCodecContext(AVFormatContext *formatContext) {
-	return openCodecContext(formatContext, &AudioStreamIndex,
-		&AudioCodecContext, AVMEDIA_TYPE_AUDIO);
+	if (openCodecContext(formatContext, &AudioStreamIndex, &AudioCodecContext,
+			AVMEDIA_TYPE_AUDIO) >= 0) {
+		PRINTLN("------------------------------------------------------");
+		PRINTLN("声道数" << AudioCodecContext->ch_layout.nb_channels);
+		PRINTLN("采样率" << AudioCodecContext->sample_rate);
+		char channelLayoutBuffer[128];
+		av_channel_layout_describe(&AudioCodecContext->ch_layout,
+			channelLayoutBuffer, sizeof(channelLayoutBuffer));
+		PRINTLN("声道布局" << channelLayoutBuffer);
+		PRINTLN("采样格式" << av_get_sample_fmt_name(
+					AudioCodecContext->sample_fmt));
+	}
+	return -1;
 }
 int AlphaAVDecode::openCodecContext(AVFormatContext *formatContext,
 	int *streamIndex, AVCodecContext **codecContext,
@@ -174,6 +186,8 @@ int AlphaAVDecode::startDecode(AVFormatContext *formatContext) {
 		return -1;
 	}
 
+	initSwrContext();
+
 	while (av_read_frame(formatContext, Packet) >= 0) {
 		if (Packet->stream_index == VideoStreamIndex) {
 			ret = decodePacket(VideoCodecContext, Packet, Frame, HwFrame);
@@ -247,8 +261,7 @@ int AlphaAVDecode::outputVideoFrame(AVFrame *frame) {
 		PRINTLN("(pts: " << frame->pts << ")->("
 						 << av_get_pix_fmt_name((AVPixelFormat)frame->format)
 						 << ")->[" << frame->width << "," << frame->height
-						 << "]"
-						 << " linesize1: " << frame->linesize[0]
+						 << "]" << " linesize1: " << frame->linesize[0]
 						 << " linesize2: " << frame->linesize[1]
 						 << " linesize3: " << frame->linesize[2]);
 	}
@@ -304,13 +317,42 @@ int AlphaAVDecode::outputVideoFrame(AVFrame *frame) {
 	}
 	return 0;
 }
-int AlphaAVDecode::outputAudioFrame(AVFrame *frame) { return 0; }
+int AlphaAVDecode::outputAudioFrame(AVFrame *frame) {
+	unsigned char *pcm = new unsigned char[1024 * 1024 * 10];
+	uint8_t *output[2] = {nullptr};
+	output[0] = pcm;
+
+	int result = swr_convert(SwrCtx, output, frame->nb_samples,
+		(const uint8_t **)frame->data, frame->nb_samples);
+	int s1 = av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) *
+		frame->ch_layout.nb_channels * result;
+	int s2 = av_samples_get_buffer_size(frame->linesize,
+		frame->ch_layout.nb_channels, result, AV_SAMPLE_FMT_S16, 1);
+
+	std::vector<uint8_t> buffer;
+	buffer.resize(s1);
+	std::copy(pcm, pcm + s1, buffer.begin());
+	outputAudioData(buffer);
+
+	delete[] pcm;
+	return 0;
+}
 int AlphaAVDecode::outputVideoData(std::vector<uint8_t> buffer) {
 	VideoDataHandler(buffer);
 	return 0;
 }
 int AlphaAVDecode::outputAudioData(std::vector<uint8_t> buffer) {
 	AudioDataHandler(buffer);
+	return 0;
+}
+
+int AlphaAVDecode::initSwrContext() {
+	SwrCtx = swr_alloc();
+	AVChannelLayout outChLayout = AV_CHANNEL_LAYOUT_STEREO;
+	AVChannelLayout inChLayout = AV_CHANNEL_LAYOUT_STEREO;
+	swr_alloc_set_opts2(&SwrCtx, &outChLayout, AV_SAMPLE_FMT_S16, 48000,
+		&inChLayout, AV_SAMPLE_FMT_FLTP, 48000, 0, nullptr);
+	swr_init(SwrCtx);
 	return 0;
 }
 } // namespace av

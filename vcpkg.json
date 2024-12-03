@@ -37,6 +37,9 @@
     },
     {
       "name": "proxy"
+    },
+    {
+      "name": "openal-soft"
     }
   ],
   "overrides": [
@@ -71,6 +74,10 @@
     {
       "name": "proxy",
       "version": "3.0.0"
+    },
+    {
+      "name": "openal-soft",
+      "version": "1.24.1"
     }
   ],
   "builtin-baseline": "cd124b84feb0c02a24a2d90981e8358fdee0e077"

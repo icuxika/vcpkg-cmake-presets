@@ -14,6 +14,7 @@ extern "C" {
 #include <libavutil/imgutils.h>
 #include <libavutil/pixdesc.h>
 #include <libavutil/pixfmt.h>
+#include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
 }
 
@@ -49,6 +50,7 @@ class AlphaAVDecode {
 	int AudioStreamIndex = -1;
 	AVCodecContext *AudioCodecContext = nullptr;
 	AVStream *AudioStream;
+	SwrContext *SwrCtx;
 
 	int startDecode(AVFormatContext *formatContext);
 	int decodePacket(AVCodecContext *codecContext, const AVPacket *packet,
@@ -72,5 +74,6 @@ class AlphaAVDecode {
 	enum AVPixelFormat getHwFormat(
 		AVCodecContext *ctx, const enum AVPixelFormat *pixFmts);
 	int hwDecoderInit(AVCodecContext *ctx, const enum AVHWDeviceType type);
+	int initSwrContext();
 };
 } // namespace av

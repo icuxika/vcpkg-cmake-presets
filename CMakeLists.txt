@@ -20,6 +20,7 @@ install(TARGETS ${PROJECT_NAME}
 add_subdirectory(Algorithms)
 add_subdirectory(FFmpegLib)
 add_subdirectory(GacUI)
+add_subdirectory(OpenALSoft)
 add_subdirectory(SingleFilePrograms)
 add_subdirectory(VulkanWrapper)
 add_subdirectory(WebUI)
