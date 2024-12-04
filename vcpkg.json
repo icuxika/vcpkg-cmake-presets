@@ -40,6 +40,9 @@
     },
     {
       "name": "openal-soft"
+    },
+    {
+      "name": "lodepng"
     }
   ],
   "overrides": [

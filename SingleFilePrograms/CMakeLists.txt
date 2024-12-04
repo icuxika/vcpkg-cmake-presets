@@ -1,11 +1,18 @@
 find_package(proxy CONFIG REQUIRED)
+find_package(lodepng CONFIG REQUIRED)
 
 add_executable(singleton singleton.cpp)
+
 add_executable(uniquePtr unique-ptr.cpp)
+
 add_executable(utf8Parse utf8-parse.cpp)
 target_link_libraries(utf8Parse
     fmt::fmt-header-only
     range-v3::range-v3
     cxxopts::cxxopts)
+
 add_executable(proxyRun proxy-run.cpp)
 target_link_libraries(proxyRun PRIVATE msft_proxy)
+
+add_executable(pngGenerator png-generator.cpp)
+target_link_libraries(pngGenerator PRIVATE lodepng)
