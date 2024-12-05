@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int main(int argc, char **argv) {
-	struct LibDemo *instance = createLibDemo();
+	void *instance = createLibDemo();
 	setValue(instance, 5);
 	printf("%i\n", getValue(instance));
 	deleteLibDemo(instance);

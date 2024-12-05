@@ -4,13 +4,17 @@
 extern "C" {
 #endif
 
-typedef struct LibDemo LibDemoW;
+#ifdef _WIN32
+#define LIB_DEMO_DLL_EXPORT __declspec(dllexport)
+#else
+#define LIB_DEMO_DLL_EXPORT
+#endif
 
-LibDemoW *createLibDemo();
-void deleteLibDemo(LibDemoW *instance);
+LIB_DEMO_DLL_EXPORT void *createLibDemo();
+LIB_DEMO_DLL_EXPORT void deleteLibDemo(void *instance);
 
-void setValue(LibDemoW *instance, int value);
-int getValue(LibDemoW *instance);
+LIB_DEMO_DLL_EXPORT void setValue(void *instance, int value);
+LIB_DEMO_DLL_EXPORT int getValue(void *instance);
 
 #ifdef __cplusplus
 }

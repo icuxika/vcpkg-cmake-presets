@@ -5,12 +5,17 @@
 extern "C" {
 #endif
 
-LibDemoW *createLibDemo() { return new LibDemo(); }
+void *createLibDemo() { return new LibDemo(); }
 
-void deleteLibDemo(LibDemoW *instance) { delete instance; }
+void deleteLibDemo(void *instance) { delete static_cast<LibDemo *>(instance); }
 
-void setValue(LibDemoW *instance, int value) { instance->setValue(value); }
-int getValue(LibDemoW *instance) { return instance->getValue(); }
+void setValue(void *instance, int value) {
+	static_cast<LibDemo *>(instance)->setValue(value);
+}
+
+int getValue(void *instance) {
+	return static_cast<LibDemo *>(instance)->getValue();
+}
 
 #ifdef __cplusplus
 }

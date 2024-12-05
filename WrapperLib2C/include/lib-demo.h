@@ -1,6 +1,5 @@
 #pragma once
 
-#include "lib-demo.h"
 #ifdef _WIN32
 #define LIB_DEMO_DLL_EXPORT __declspec(dllexport)
 #else
