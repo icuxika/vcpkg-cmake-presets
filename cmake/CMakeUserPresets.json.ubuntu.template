@@ -1,8 +1,6 @@
 {
     "version": 4,
-    "include": [
-        "cmake/CMakePresets.json"
-    ],
+    "include": ["cmake/CMakePresets.json"],
     "configurePresets": [
         {
             "name": "ubuntu-default",
@@ -13,7 +11,7 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/ubuntu-default"
             },
             "environment": {
-            	"VCPKG_ROOT": "/home/icuxika/CommandLineTools/vcpkg"
+                "VCPKG_ROOT": "/home/icuxika/CommandLineTools/vcpkg"
             }
         },
         {
@@ -29,7 +27,39 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/clang"
             },
             "environment": {
-            	"VCPKG_ROOT": "/home/icuxika/CommandLineTools/vcpkg"
+                "VCPKG_ROOT": "/home/icuxika/CommandLineTools/vcpkg"
+            }
+        },
+        {
+            "name": "llvmlibc-overlay",
+            "inherits": "default",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/out/build/llvmlibc-overlay",
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "",
+                "CMAKE_EXE_LINKER_FLAGS": "-static -l:libllvmlibc.a",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/llvmlibc-overlay"
+            },
+            "environment": {
+                "VCPKG_ROOT": "/home/icuxika/CommandLineTools/vcpkg"
+            }
+        },
+        {
+            "name": "llvmlibc-fullbuild",
+            "inherits": "default",
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/out/build/llvmlibc-fullbuild",
+            "cacheVariables": {
+                "CMAKE_C_FLAGS": "",
+                "CMAKE_EXE_LINKER_FLAGS": "-static -rtlib=compiler-rt -fuse-ld=lld",
+                "CMAKE_C_COMPILER": "/home/icuxika/CommandLineTools/llvm-libc/bin/clang",
+                "CMAKE_SYSROOT": "/home/icuxika/CommandLineTools/llvm-libc",
+                "CMAKE_TRY_COMPILE_TARGET_TYPE": "STATIC_LIBRARY",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/llvmlibc-fullbuild"
+            },
+            "environment": {
+                "VCPKG_ROOT": "/home/icuxika/CommandLineTools/vcpkg"
             }
         },
         {
@@ -44,7 +74,7 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/musl"
             },
             "environment": {
-            	"VCPKG_ROOT": "/home/icuxika/CommandLineTools/vcpkg"
+                "VCPKG_ROOT": "/home/icuxika/CommandLineTools/vcpkg"
             }
         }
     ],
@@ -67,6 +97,26 @@
         {
             "name": "clang-release",
             "configurePreset": "clang",
+            "configuration": "Release"
+        },
+        {
+            "name": "llvmlibc-overlay-debug",
+            "configurePreset": "llvmlibc-overlay",
+            "configuration": "Debug"
+        },
+        {
+            "name": "llvmlibc-overlay-release",
+            "configurePreset": "llvmlibc-overlay",
+            "configuration": "Release"
+        },
+        {
+            "name": "llvmlibc-fullbuild-debug",
+            "configurePreset": "llvmlibc-fullbuild",
+            "configuration": "Debug"
+        },
+        {
+            "name": "llvmlibc-fullbuild-release",
+            "configurePreset": "llvmlibc-fullbuild",
             "configuration": "Release"
         },
         {
