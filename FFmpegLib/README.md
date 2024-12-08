@@ -1,6 +1,4 @@
-## 配置依赖库
-在`FFmpegLib`目录下执行`.\win-ffmpeg-static-download.ps1`
-> [https://github.com/icuxika/FFmpegWindowsBuild](https://github.com/icuxika/FFmpegWindowsBuild) 根据此项目构建出Release和Debug版本的静态`FFmpeg`库
+# 构建说明
 
 
 ## 构建出静态库

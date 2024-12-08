@@ -18,6 +18,22 @@ if (UNIX AND APPLE)
             libswscale)
 elseif (UNIX)
     message(STATUS ">>> Linux")
+    find_package(PkgConfig REQUIRED)
+    set(ENV{PKG_CONFIG_PATH}
+            "/home/icuxika/CommandLineTools/ffmpeg-6.1.1-static/lib/pkgconfig")
+
+    pkg_check_modules(
+            ffmpeg
+            REQUIRED
+            IMPORTED_TARGET
+            libavcodec
+            libavdevice
+            libavfilter
+            libavformat
+            libavutil
+            libpostproc
+            libswresample
+            libswscale)
 else ()
     message(STATUS ">>> Windows")
 endif ()
@@ -39,13 +55,9 @@ if (UNIX AND APPLE)
     target_link_libraries(${LIB_STATIC_NAME} PUBLIC PkgConfig::ffmpeg)
 elseif (UNIX)
     message(STATUS ">>> Linux")
-    target_include_directories(${LIB_NAME} PUBLIC /usr/include/x86_64-linux-gnu)
-    target_link_directories(${LIB_NAME} PUBLIC /usr/lib/x86_64-linux-gnu)
-    target_link_libraries(${LIB_NAME} PUBLIC avcodec avdevice avfilter avformat avutil postproc swresample swscale)
+    target_link_libraries(${LIB_NAME} PUBLIC PkgConfig::ffmpeg)
 
-    target_include_directories(${LIB_STATIC_NAME} PUBLIC /usr/include/x86_64-linux-gnu)
-    target_link_directories(${LIB_STATIC_NAME} PUBLIC /usr/lib/x86_64-linux-gnu)
-    target_link_libraries(${LIB_STATIC_NAME} PUBLIC avcodec avdevice avfilter avformat avutil postproc swresample swscale)
+    target_link_libraries(${LIB_STATIC_NAME} PUBLIC PkgConfig::ffmpeg)
 else ()
     message(STATUS ">>> Windows")
     target_include_directories(${LIB_NAME} PUBLIC libffmpeg\\include)
