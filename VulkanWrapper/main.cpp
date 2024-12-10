@@ -18,7 +18,8 @@ int main(int argc, char **argv) {
 	cxxopts::Options options("VulkanWrapper", "Yuv420P Player");
 	options.add_options()("f,file", "File name", cxxopts::value<std::string>())(
 		"m,mode", "Framerate limitation",
-		cxxopts::value<bool>()->default_value("false"))(
+		cxxopts::value<bool>()->default_value("false"))("c,cuda",
+		"EnableHwDecode", cxxopts::value<bool>()->default_value("false"))(
 		"h,help", "Print usage");
 	auto result = options.parse(argc, argv);
 	if (result.count("help") || !result.count("file")) {
@@ -31,6 +32,8 @@ int main(int argc, char **argv) {
 
 	// 是否控制帧率与视频帧率一致
 	bool limitFramerate = result["mode"].as<bool>();
+	// 是否开启硬件解码
+	bool enableHwDecode = result["cuda"].as<bool>();
 
 	// FFmpeg 功能初始化
 	auto &alphaAvCore = av::AlphaAVCore::GetInstance();
@@ -41,7 +44,7 @@ int main(int argc, char **argv) {
 		};
 	alphaAvCore.AlphaAVDecodeContext->AudioDataHandler =
 		[](std::vector<uint8_t> buffer) {};
-	alphaAvCore.AlphaAVDecodeContext->EnableHwDecode = true;
+	alphaAvCore.AlphaAVDecodeContext->EnableHwDecode = enableHwDecode;
 	alphaAvCore.openFile(url);
 
 	glfwInit();

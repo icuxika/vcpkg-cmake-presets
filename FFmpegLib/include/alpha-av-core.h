@@ -2,6 +2,9 @@
 
 #include "alpha-av-decode.h"
 #include "alpha-av-demux.h"
+#ifdef __GNUC__
+#include <memory>
+#endif
 #include <iostream>
 
 #ifdef _WIN32
