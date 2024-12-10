@@ -3,19 +3,27 @@
 #include "include/core/SkCanvas.h"
 #include "include/core/SkSurface.h"
 #include <iostream>
+#include <string>
 
 #define MAX_LOADSTRING 100
 
-// Global Variables:
-HINSTANCE hInst;					 // current instance
-WCHAR szTitle[MAX_LOADSTRING];		 // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING]; // the main window class name
+// 全局变量
+HINSTANCE hInst;			   // 存储当前应用程序实例的句柄
+WCHAR szTitle[MAX_LOADSTRING]; // 应用程序标题
+WCHAR szWindowClass
+	[MAX_LOADSTRING]; // 用于定义主窗口的类名，在窗口注册等操作中会使用到这个名称来标识窗口所属的类
+HHOOK hKeyboardHook;  // 全局键盘钩子句柄
 
-// Forward declarations of functions included in this code module:
+// 函数声明，用于注册窗口类，在后续的程序初始化阶段会调用这个函数来完成窗口类的注册操作
 ATOM MyRegisterClass(HINSTANCE hInstance);
+// 函数声明，用于初始化应用程序实例，比如创建窗口、显示窗口等操作都在此函数中进行
 BOOL InitInstance(HINSTANCE, int);
+// 窗口过程函数声明，用于处理窗口接收到的各种消息，如鼠标消息、键盘消息、菜单消息等，是窗口消息处理的核心函数
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+// 关于对话框的回调函数声明，用于处理关于对话框的相关消息，比如对话框的初始化、按钮点击等操作
 INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
+// 键盘钩子回调函数声明，用于拦截和处理键盘消息，在这里可以检测全局快捷键以及打印按下或释放的按键信息等
+LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine,
@@ -23,27 +31,55 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	// TODO: Place code here.
+	// 将进程默认 DPI 感知设置为系统 DPI 感知
+	SetProcessDPIAware();
 
-	// Initialize global strings
+	// 注册键盘钩子
+	hKeyboardHook =
+		SetWindowsHookExW(WH_KEYBOARD_LL, KeyboardProc, hInstance, 0);
+	if (hKeyboardHook == NULL) {
+		MessageBoxW(NULL, L"全局键盘钩子注册失败", L"错误", MB_OK);
+	}
+
+	// 从 WindowsProject.rc
+	// 文件中的字符串资源表（STRINGTABLE）读取应用程序标题和窗口类名对应的字符串资源，
+	// 分别存储到 szTitle 和 szWindowClass 变量中，MAX_LOADSTRING
+	// 用于指定读取字符串的最大长度
 	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadStringW(hInstance, IDC_WINDOWSPROJECT, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
-	// Perform application initialization:
+	// 使 std::wcout 能够输出中文且不乱码
+	std::locale::global(std::locale(".UTF8"));
+	std::wcout << L"szTitle: " << szTitle << std::endl;
+	std::wcout << L"szWindowClass: " << szWindowClass << std::endl;
+
+	// 调用 InitInstance 函数进行应用程序的初始化操作，如果初始化失败（返回
+	// FALSE），则程序直接退出并返回相应的错误码
 	if (!InitInstance(hInstance, nCmdShow)) {
 		return FALSE;
 	}
 
+	// 加载应用程序的快捷键表，通过 MAKEINTRESOURCE
+	// 宏将快捷键表资源标识符转换为相应的资源句柄，
+	// 后续在消息循环中会根据这个快捷键表来处理快捷键相关的消息
 	HACCEL hAccelTable =
 		LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINDOWSPROJECT));
 
 	MSG msg;
 
-	// Main message loop:
+	// 消息循环是 Windows
+	// 应用程序的核心部分，不断从消息队列中获取消息并进行处理，直到接收到
+	// WM_QUIT 消息退出循环
 	while (GetMessage(&msg, nullptr, 0, 0)) {
+		// 判断当前消息是否是快捷键消息，如果是快捷键消息且被
+		// TranslateAccelerator 函数处理了（返回非零值）， 则不会再进入下面的
+		// TranslateMessage 和 DispatchMessage 流程，避免重复处理
 		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
+			// 将某些键盘按键消息（如按键按下）转换为字符消息（如对应的 ASCII
+			// 字符消息），方便后续在窗口过程函数中进行字符输入相关处理
 			TranslateMessage(&msg);
+			// 将消息分发给对应的窗口过程函数（WndProc）进行处理，根据消息中的窗口句柄找到相应的窗口过程函数来响应消息内容
 			DispatchMessage(&msg);
 		}
 	}
@@ -51,11 +87,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	return (int)msg.wParam;
 }
 
-//
-//  FUNCTION: MyRegisterClass()
-//
-//  PURPOSE: Registers the window class.
-//
+// 函数定义，用于注册窗口类
+// 通过填充 WNDCLASSEXW
+// 结构体的各个字段来定义窗口类的属性，如窗口风格、窗口过程函数指针、图标、光标、背景颜色、菜单名等信息，
+// 最后调用 RegisterClassExW
+// 函数将定义好的窗口类注册到系统中，返回注册结果（ATOM
+// 类型的原子值，用于标识窗口类）
 ATOM MyRegisterClass(HINSTANCE hInstance) {
 	WNDCLASSEXW wcex;
 
@@ -76,16 +113,13 @@ ATOM MyRegisterClass(HINSTANCE hInstance) {
 	return RegisterClassExW(&wcex);
 }
 
-//
-//   FUNCTION: InitInstance(HINSTANCE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
+// 函数定义，用于初始化应用程序实例，主要是创建和显示主窗口
+// 首先将传入的实例句柄存储到全局变量 hInst 中，方便后续其他地方使用，
+// 然后通过 CreateWindowW
+// 函数创建主窗口，根据指定的窗口类名、标题、窗口风格等参数来创建窗口，
+// 如果窗口创建成功，调用 ShowWindow 和 UpdateWindow
+// 函数分别显示窗口并触发窗口的首次重绘操作，最后返回初始化结果（成功返回
+// TRUE，失败返回 FALSE）
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
 	hInst = hInstance; // Store instance handle in our global variable
 
@@ -97,15 +131,21 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
 		return FALSE;
 	}
 
-	// 透明度
-	SetLayeredWindowAttributes(hWnd, 0, 128, LWA_ALPHA);
-
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
 
 	return TRUE;
 }
 
+// 函数定义，用于创建 Skia
+// 绘图上下文相关的资源，包括内存设备上下文（hdcMemory）、位图（hBitmap）以及
+// SkSurface 对象等
+// 首先释放之前可能存在的内存设备上下文和位图资源（如果有的话），然后创建与传入的设备上下文（hdc）兼容的内存设备上下文，
+// 接着定义位图信息结构体（BITMAPINFO）来指定要创建的位图的属性，如宽度、高度、位深度、颜色格式等，
+// 通过 CreateDIBSection
+// 函数创建一个与设备无关的位图（DIB），并将其选入内存设备上下文， 最后使用
+// SkSurfaces::WrapPixels 函数基于创建好的位图像素数据等信息创建 SkSurface
+// 对象，用于后续的 Skia 绘图操作
 void createSkiaContext(HDC &hdc, sk_sp<SkSurface> &skSurface, HDC &hdcMemory,
 	HBITMAP &hBitmap, LONG width, LONG height) {
 	if (hdcMemory) {
@@ -139,16 +179,7 @@ void createSkiaContext(HDC &hdc, sk_sp<SkSurface> &skSurface, HDC &hdcMemory,
 		SkSurfaces::WrapPixels(imageInfo, pixels, ((width * 32 + 31) / 32) * 4);
 }
 
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE: Processes messages for the main window.
-//
-//  WM_COMMAND  - process the application menu
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-//
-//
+// 窗口过程函数定义，用于处理主窗口接收到的各种消息
 LRESULT CALLBACK WndProc(
 	HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
@@ -159,8 +190,21 @@ LRESULT CALLBACK WndProc(
 	switch (message) {
 	case WM_COMMAND: {
 		int wmId = LOWORD(wParam);
-		// Parse the menu selections:
+		// 根据菜单命令的标识符（wmId）来处理不同的菜单选择操作
 		switch (wmId) {
+		case IDM_SET_TRANSPARENCY: {
+			// 设置窗口为半透明
+			SetWindowLong(hWnd, GWL_EXSTYLE,
+				GetWindowLong(hWnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+			SetLayeredWindowAttributes(hWnd, 0, (255 * 70) / 100, LWA_ALPHA);
+		} break;
+		case IDM_CLOSE_TRANSPARENCY: {
+			// 设置窗口为不透明
+			SetWindowLong(hWnd, GWL_EXSTYLE,
+				GetWindowLong(hWnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+			RedrawWindow(hWnd, NULL, NULL,
+				RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN);
+		} break;
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			break;
@@ -168,6 +212,7 @@ LRESULT CALLBACK WndProc(
 			DestroyWindow(hWnd);
 			break;
 		default:
+			// 对于其他未处理的菜单命令，交给默认的窗口过程函数（DefWindowProc）来处理，确保系统默认的行为得以执行
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 	} break;
@@ -205,6 +250,11 @@ LRESULT CALLBACK WndProc(
 		if (skSurface) {
 			SkCanvas *canvas = skSurface->getCanvas();
 			if (canvas) {
+				// 使用 Skia 绘图，先清除画布为白色（SK_ColorWHITE），
+				// 然后创建一个 SkPaint
+				// 对象，设置抗锯齿属性（setAntiAlias）和绘制颜色（setColor
+				// 为蓝色 SK_ColorBLUE），
+				// 最后使用该画笔在画布上绘制一个矩形（drawRect），指定了矩形的位置和尺寸信息
 				canvas->clear(SK_ColorWHITE);
 
 				SkPaint paint;
@@ -213,12 +263,20 @@ LRESULT CALLBACK WndProc(
 				canvas->drawRect(SkRect::MakeXYWH(10, 10, 60, 40), paint);
 			}
 		}
+		// 将内存设备上下文（hdcMemory）中的位图内容复制到窗口的设备上下文（hdc）中，实现绘图内容在窗口上的显示，
+		// 如果 BitBlt 操作执行出错，会弹出一个消息框提示错误信息
 		if (!BitBlt(hdc, 0, 0, ps.rcPaint.right, ps.rcPaint.bottom, hdcMemory,
 				0, 0, SRCCOPY)) {
 			MessageBoxW(hWnd, L"BitBlt 执行出错", L"BitBlt 执行出错", MB_OK);
 		}
 
 		EndPaint(hWnd, &ps);
+	} break;
+	case WM_CLOSE: {
+		if (MessageBoxW(hWnd, L"确定要关闭应用程序吗", L"Skia示例",
+				MB_YESNOCANCEL) == IDYES) {
+			DestroyWindow(hWnd);
+		}
 	} break;
 	case WM_DESTROY:
 		if (hBitmap) {
@@ -229,19 +287,79 @@ LRESULT CALLBACK WndProc(
 			DeleteDC(hdcMemory);
 			hdcMemory = nullptr;
 		}
+		if (hKeyboardHook != NULL) {
+			UnhookWindowsHookEx(hKeyboardHook);
+			hKeyboardHook = NULL;
+		}
 		PostQuitMessage(0);
 		break;
 	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		return DefWindowProcW(hWnd, message, wParam, lParam);
 	}
 	return 0;
 }
 
-// Message handler for about box.
+// 根据扫描码获取对应的键名，返回一个 std::wstring 类型的宽字符串表示键名
+std::wstring keyNameFromScanCode(UINT scanCode) {
+	wchar_t buf[32];
+	GetKeyNameTextW(scanCode << 16, buf, sizeof(buf));
+	return {buf};
+}
+
+// 根据虚拟键码获取对应的键名，通过先将虚拟键码转换为扫描码，再调用
+// keyNameFromScanCode 函数来实现
+std::wstring keyNameFromVirtualKeyCode(DWORD virtualKeyCode) {
+	return keyNameFromScanCode(MapVirtualKeyW(virtualKeyCode, MAPVK_VK_TO_VSC));
+}
+
+LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam) {
+	if (code == HC_ACTION) {
+		KBDLLHOOKSTRUCT *p = (KBDLLHOOKSTRUCT *)lParam;
+		if (wParam == WM_KEYDOWN) {
+			std::cout << "down: " << p->vkCode << std::endl;
+			std::wcout << L"down: " << keyNameFromVirtualKeyCode(p->vkCode)
+					   << std::endl;
+		} else if (wParam == WM_KEYUP) {
+			std::cout << "up: " << p->vkCode << std::endl;
+			std::wcout << L"up: " << keyNameFromVirtualKeyCode(p->vkCode)
+					   << std::endl;
+		}
+		// CTRL + Z 最小化
+		if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && p->vkCode == 'Z') {
+			// 通过窗口类名（szWindowClass）和窗口标题（szTitle）查找对应的窗口句柄，
+			// 前提是窗口类名和标题在系统中是唯一可标识该窗口的，若找到则返回对应的窗口句柄，否则返回
+			// NULL
+			HWND hwnd = FindWindowW(szWindowClass, szTitle);
+			if (hwnd != NULL) {
+				// 通过 GetWindowPlacement
+				// 函数获取指定窗口（hwnd）的当前显示状态等信息，存储到 wp
+				// 结构体中
+				WINDOWPLACEMENT wp = {sizeof(WINDOWPLACEMENT)};
+				GetWindowPlacement(hwnd, &wp);
+				// 判断窗口当前是否处于最小化状态
+				if (wp.showCmd == SW_SHOWMINIMIZED) {
+					// 如果窗口处于最小化状态，则调用 ShowWindow
+					// 函数将窗口恢复到之前的显示状态
+					ShowWindow(hwnd, SW_RESTORE);
+					// 如果窗口不是最小化状态，则调用 ShowWindow
+					// 函数将窗口最小化
+				} else {
+					ShowWindow(hwnd, SW_MINIMIZE);
+				}
+			}
+		}
+	}
+	return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	UNREFERENCED_PARAMETER(lParam);
 	switch (message) {
 	case WM_INITDIALOG:
+		// 使对话框半透明
+		SetWindowLong(hDlg, GWL_EXSTYLE,
+			GetWindowLong(hDlg, GWL_EXSTYLE) | WS_EX_LAYERED);
+		SetLayeredWindowAttributes(hDlg, 0, (255 * 70) / 100, LWA_ALPHA);
 		return (INT_PTR)TRUE;
 
 	case WM_COMMAND:
