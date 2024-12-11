@@ -11,7 +11,7 @@ if (MSVC)
     target_include_directories(SkiaUI PRIVATE include)
     target_include_directories(SkiaUI PRIVATE skia)
     target_link_directories(SkiaUI PRIVATE skia\\lib)
-    target_link_libraries(SkiaUI PRIVATE skia)
+    target_link_libraries(SkiaUI PRIVATE skia Dbghelp Pathcch)
     target_sources(
             SkiaUI
             PRIVATE

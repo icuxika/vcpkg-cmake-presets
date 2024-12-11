@@ -1,9 +1,14 @@
 #include "WindowsProject.h"
 #include "framework.h"
 #include "include/core/SkCanvas.h"
+#include "include/core/SkPaint.h"
+#include "include/core/SkPath.h"
+#include "include/core/SkPathEffect.h"
 #include "include/core/SkSurface.h"
+#include "include/effects/SkCornerPathEffect.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 #define MAX_LOADSTRING 100
 
@@ -15,15 +20,17 @@ WCHAR szWindowClass
 HHOOK hKeyboardHook;  // 全局键盘钩子句柄
 
 // 函数声明，用于注册窗口类，在后续的程序初始化阶段会调用这个函数来完成窗口类的注册操作
-ATOM MyRegisterClass(HINSTANCE hInstance);
+ATOM myRegisterClass(HINSTANCE hInstance);
 // 函数声明，用于初始化应用程序实例，比如创建窗口、显示窗口等操作都在此函数中进行
-BOOL InitInstance(HINSTANCE, int);
+BOOL initInstance(HINSTANCE, int);
 // 窗口过程函数声明，用于处理窗口接收到的各种消息，如鼠标消息、键盘消息、菜单消息等，是窗口消息处理的核心函数
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK wndProc(HWND, UINT, WPARAM, LPARAM);
 // 关于对话框的回调函数声明，用于处理关于对话框的相关消息，比如对话框的初始化、按钮点击等操作
-INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK about(HWND, UINT, WPARAM, LPARAM);
 // 键盘钩子回调函数声明，用于拦截和处理键盘消息，在这里可以检测全局快捷键以及打印按下或释放的按键信息等
-LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK keyboardProc(int code, WPARAM wParam, LPARAM lParam);
+// 异常捕获
+LONG WINAPI exceptionFilter(struct _EXCEPTION_POINTERS *exceptionInfo);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine,
@@ -31,12 +38,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
+	SetUnhandledExceptionFilter(exceptionFilter);
+
 	// 将进程默认 DPI 感知设置为系统 DPI 感知
 	SetProcessDPIAware();
 
 	// 注册键盘钩子
 	hKeyboardHook =
-		SetWindowsHookExW(WH_KEYBOARD_LL, KeyboardProc, hInstance, 0);
+		SetWindowsHookExW(WH_KEYBOARD_LL, keyboardProc, hInstance, 0);
 	if (hKeyboardHook == NULL) {
 		MessageBoxW(NULL, L"全局键盘钩子注册失败", L"错误", MB_OK);
 	}
@@ -47,7 +56,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	// 用于指定读取字符串的最大长度
 	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadStringW(hInstance, IDC_WINDOWSPROJECT, szWindowClass, MAX_LOADSTRING);
-	MyRegisterClass(hInstance);
+	myRegisterClass(hInstance);
 
 	// 使 std::wcout 能够输出中文且不乱码
 	std::locale::global(std::locale(".UTF8"));
@@ -56,7 +65,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// 调用 InitInstance 函数进行应用程序的初始化操作，如果初始化失败（返回
 	// FALSE），则程序直接退出并返回相应的错误码
-	if (!InitInstance(hInstance, nCmdShow)) {
+	if (!initInstance(hInstance, nCmdShow)) {
 		return FALSE;
 	}
 
@@ -93,13 +102,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 // 最后调用 RegisterClassExW
 // 函数将定义好的窗口类注册到系统中，返回注册结果（ATOM
 // 类型的原子值，用于标识窗口类）
-ATOM MyRegisterClass(HINSTANCE hInstance) {
+ATOM myRegisterClass(HINSTANCE hInstance) {
 	WNDCLASSEXW wcex;
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
 
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WndProc;
+	wcex.lpfnWndProc = wndProc;
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = hInstance;
@@ -120,7 +129,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance) {
 // 如果窗口创建成功，调用 ShowWindow 和 UpdateWindow
 // 函数分别显示窗口并触发窗口的首次重绘操作，最后返回初始化结果（成功返回
 // TRUE，失败返回 FALSE）
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
+BOOL initInstance(HINSTANCE hInstance, int nCmdShow) {
 	hInst = hInstance; // Store instance handle in our global variable
 
 	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
@@ -179,8 +188,28 @@ void createSkiaContext(HDC &hdc, sk_sp<SkSurface> &skSurface, HDC &hdcMemory,
 		SkSurfaces::WrapPixels(imageInfo, pixels, ((width * 32 + 31) / 32) * 4);
 }
 
+class SkiaUIElementNode {
+  public:
+	int ElementType; // 标识元素类型，比如按钮、文本框、容器等
+	SkRect LayoutBounds; // 布局区域，确定自身在父容器中的位置和尺寸
+	SkPaint Paint; // 绘制相关属性
+	std::vector<std::shared_ptr<SkiaUIElementNode>>
+		Children; // 子节点指针列表，体现层次关系
+	virtual void draw(SkCanvas *canvas) {
+		// 绘制自身的逻辑，根据elementType调用相应Skia绘制函数，类似前面图形对象列表中的绘制逻辑
+		if (ElementType ==
+			1) { // 假设按钮类型为1，绘制按钮（示例简单以矩形表示）
+			canvas->drawRect(LayoutBounds, Paint);
+		}
+		// 绘制子节点
+		for (const auto &child : Children) {
+			child->draw(canvas);
+		}
+	}
+};
+
 // 窗口过程函数定义，用于处理主窗口接收到的各种消息
-LRESULT CALLBACK WndProc(
+LRESULT CALLBACK wndProc(
 	HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
 	static sk_sp<SkSurface> skSurface;
@@ -206,7 +235,7 @@ LRESULT CALLBACK WndProc(
 				RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN);
 		} break;
 		case IDM_ABOUT:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, about);
 			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
@@ -250,17 +279,22 @@ LRESULT CALLBACK WndProc(
 		if (skSurface) {
 			SkCanvas *canvas = skSurface->getCanvas();
 			if (canvas) {
-				// 使用 Skia 绘图，先清除画布为白色（SK_ColorWHITE），
-				// 然后创建一个 SkPaint
-				// 对象，设置抗锯齿属性（setAntiAlias）和绘制颜色（setColor
-				// 为蓝色 SK_ColorBLUE），
-				// 最后使用该画笔在画布上绘制一个矩形（drawRect），指定了矩形的位置和尺寸信息
 				canvas->clear(SK_ColorWHITE);
 
 				SkPaint paint;
 				paint.setAntiAlias(true);
 				paint.setColor(SK_ColorBLUE);
 				canvas->drawRect(SkRect::MakeXYWH(10, 10, 60, 40), paint);
+
+				SkRect buttonRect = SkRect::MakeXYWH(100, 60, 360, 120);
+				SkPaint buttonPaint;
+				buttonPaint.setAntiAlias(true);
+				buttonPaint.setStyle(SkPaint::kStrokeAndFill_Style);
+				buttonPaint.setStrokeWidth(2.0);
+				buttonPaint.setColor(SK_ColorBLUE);
+				// setPathEffect 会导致程序崩溃，原因未知
+//				buttonPaint.setPathEffect(SkCornerPathEffect::Make(10.0f));
+				canvas->drawRoundRect(buttonRect, 10.0f, 10.0f, buttonPaint);
 			}
 		}
 		// 将内存设备上下文（hdcMemory）中的位图内容复制到窗口的设备上下文（hdc）中，实现绘图内容在窗口上的显示，
@@ -271,6 +305,25 @@ LRESULT CALLBACK WndProc(
 		}
 
 		EndPaint(hWnd, &ps);
+	} break;
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDOWN: {
+		// 复杂结构考虑四叉树优化
+		if (skSurface) {
+			SkCanvas *canvas = skSurface->getCanvas();
+			if (canvas) {
+				int x = GET_X_LPARAM(lParam);
+				int y = GET_Y_LPARAM(lParam);
+				SkRect rect = SkRect::MakeXYWH(10, 10, 60, 40);
+				if (rect.contains(SkIntToScalar(x), SkIntToScalar(y))) {
+					if (message == WM_LBUTTONDOWN) {
+						std::cout << "鼠标按下在矩形内" << std::endl;
+					} else if (message == WM_LBUTTONUP) {
+						MessageBoxW(hWnd, L"点击了矩形区域", L"提示", MB_OK);
+					}
+				}
+			}
+		}
 	} break;
 	case WM_CLOSE: {
 		if (MessageBoxW(hWnd, L"确定要关闭应用程序吗", L"Skia示例",
@@ -312,7 +365,7 @@ std::wstring keyNameFromVirtualKeyCode(DWORD virtualKeyCode) {
 	return keyNameFromScanCode(MapVirtualKeyW(virtualKeyCode, MAPVK_VK_TO_VSC));
 }
 
-LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK keyboardProc(int code, WPARAM wParam, LPARAM lParam) {
 	if (code == HC_ACTION) {
 		KBDLLHOOKSTRUCT *p = (KBDLLHOOKSTRUCT *)lParam;
 		if (wParam == WM_KEYDOWN) {
@@ -352,7 +405,7 @@ LRESULT CALLBACK KeyboardProc(int code, WPARAM wParam, LPARAM lParam) {
 	return CallNextHookEx(NULL, code, wParam, lParam);
 }
 
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
+INT_PTR CALLBACK about(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	UNREFERENCED_PARAMETER(lParam);
 	switch (message) {
 	case WM_INITDIALOG:
@@ -370,4 +423,52 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 		break;
 	}
 	return (INT_PTR)FALSE;
+}
+
+BOOL dumpFile(const std::wstring& strPath, struct _EXCEPTION_POINTERS *exceptionInfo) {
+	HANDLE hFile = CreateFileW(strPath.c_str(), GENERIC_WRITE, 0, NULL,
+		CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) {
+		std::cerr << "dump文件创建失败" << std::endl;
+		return FALSE;
+	}
+	MINIDUMP_EXCEPTION_INFORMATION m1;
+	m1.ThreadId = GetCurrentThreadId();
+	m1.ExceptionPointers = exceptionInfo;
+	m1.ClientPointers = TRUE;
+	MINIDUMP_USER_STREAM_INFORMATION m2;
+	m2.UserStreamCount = 0;
+	m2.UserStreamArray = NULL;
+	MINIDUMP_CALLBACK_INFORMATION m3;
+	m3.CallbackRoutine = NULL;
+	m3.CallbackParam = NULL;
+
+	BOOL dumpResult = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile,
+		MiniDumpNormal, &m1, &m2, &m3);
+	CloseHandle(hFile);
+	return dumpResult;
+}
+
+LONG WINAPI exceptionFilter(struct _EXCEPTION_POINTERS *exceptionInfo) {
+	auto exceptionCode = exceptionInfo->ExceptionRecord->ExceptionCode;
+	auto *exceptionAddress = exceptionInfo->ExceptionRecord->ExceptionAddress;
+
+	std::wstring msg = L"未处理的异常，错误代码是 " +
+					   std::to_wstring(exceptionCode) + L"，异常地址是 " +
+					   std::to_wstring(reinterpret_cast<uintptr_t>(exceptionAddress));
+	MessageBoxW(NULL, msg.c_str(), L"程序异常", MB_OK | MB_ICONERROR);
+
+	wchar_t path[MAX_PATH] = {0};
+	GetModuleFileNameW(NULL, path, MAX_PATH);
+	PathCchRemoveFileSpec(path, lstrlenW(path));
+	std::wstring strPath = path;
+	strPath += L"\\dump.dmp";
+
+	if (dumpFile(strPath, exceptionInfo)) {
+		return EXCEPTION_EXECUTE_HANDLER;
+	}
+	// 可以选择返回值来决定系统对异常的后续处理方式
+	// EXCEPTION_EXECUTE_HANDLER表示已经处理了异常，系统可以终止进程
+	// EXCEPTION_CONTINUE_SEARCH表示让系统继续寻找其他异常处理机制
+	return EXCEPTION_CONTINUE_SEARCH;
 }
