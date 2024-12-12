@@ -234,6 +234,14 @@ LRESULT CALLBACK wndProc(
 			RedrawWindow(hWnd, NULL, NULL,
 				RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN);
 		} break;
+		case IDM_SHOW_WINDOW: {
+			if (!RegisterHotKey(hWnd, 1, MOD_CONTROL | MOD_ALT, 0x5A)) {
+				MessageBoxW(hWnd, L"注册快捷键失败", L"错误", MB_OK);
+			}
+		} break;
+		case IDM_HIDE_WINDOW: {
+			UnregisterHotKey(hWnd, 1);
+		} break;
 		case IDM_ABOUT:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, about);
 			break;
@@ -243,6 +251,22 @@ LRESULT CALLBACK wndProc(
 		default:
 			// 对于其他未处理的菜单命令，交给默认的窗口过程函数（DefWindowProc）来处理，确保系统默认的行为得以执行
 			return DefWindowProc(hWnd, message, wParam, lParam);
+		}
+	} break;
+	case WM_HOTKEY: {
+		if (wParam == 1) {
+			WINDOWPLACEMENT wp = {sizeof(WINDOWPLACEMENT)};
+			GetWindowPlacement(hWnd, &wp);
+			// 判断窗口当前是否处于最小化状态
+			if (wp.showCmd == SW_SHOWMINIMIZED) {
+				// 如果窗口处于最小化状态，则调用 ShowWindow
+				// 函数将窗口恢复到之前的显示状态
+				ShowWindow(hWnd, SW_RESTORE);
+				// 如果窗口不是最小化状态，则调用 ShowWindow
+				// 函数将窗口最小化
+			} else {
+				ShowWindow(hWnd, SW_MINIMIZE);
+			}
 		}
 	} break;
 	case WM_CREATE: {
@@ -293,7 +317,7 @@ LRESULT CALLBACK wndProc(
 				buttonPaint.setStrokeWidth(2.0);
 				buttonPaint.setColor(SK_ColorBLUE);
 				// setPathEffect 会导致程序崩溃，原因未知
-//				buttonPaint.setPathEffect(SkCornerPathEffect::Make(10.0f));
+				//				buttonPaint.setPathEffect(SkCornerPathEffect::Make(10.0f));
 				canvas->drawRoundRect(buttonRect, 10.0f, 10.0f, buttonPaint);
 			}
 		}
@@ -377,27 +401,30 @@ LRESULT CALLBACK keyboardProc(int code, WPARAM wParam, LPARAM lParam) {
 			std::wcout << L"up: " << keyNameFromVirtualKeyCode(p->vkCode)
 					   << std::endl;
 		}
-		// CTRL + Z 最小化
-		if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) && p->vkCode == 'Z') {
-			// 通过窗口类名（szWindowClass）和窗口标题（szTitle）查找对应的窗口句柄，
-			// 前提是窗口类名和标题在系统中是唯一可标识该窗口的，若找到则返回对应的窗口句柄，否则返回
-			// NULL
-			HWND hwnd = FindWindowW(szWindowClass, szTitle);
-			if (hwnd != NULL) {
-				// 通过 GetWindowPlacement
-				// 函数获取指定窗口（hwnd）的当前显示状态等信息，存储到 wp
-				// 结构体中
-				WINDOWPLACEMENT wp = {sizeof(WINDOWPLACEMENT)};
-				GetWindowPlacement(hwnd, &wp);
-				// 判断窗口当前是否处于最小化状态
-				if (wp.showCmd == SW_SHOWMINIMIZED) {
-					// 如果窗口处于最小化状态，则调用 ShowWindow
-					// 函数将窗口恢复到之前的显示状态
-					ShowWindow(hwnd, SW_RESTORE);
-					// 如果窗口不是最小化状态，则调用 ShowWindow
-					// 函数将窗口最小化
-				} else {
-					ShowWindow(hwnd, SW_MINIMIZE);
+		if (wParam == WM_KEYDOWN) {
+			// CTRL + ALT + J 最小化
+			if ((GetAsyncKeyState(VK_CONTROL) & 0x8000) &&
+				(GetAsyncKeyState(VK_MENU) & 0x8000) && p->vkCode == 'J') {
+				// 通过窗口类名（szWindowClass）和窗口标题（szTitle）查找对应的窗口句柄，
+				// 前提是窗口类名和标题在系统中是唯一可标识该窗口的，若找到则返回对应的窗口句柄，否则返回
+				// NULL
+				HWND hwnd = FindWindowW(szWindowClass, szTitle);
+				if (hwnd != NULL) {
+					// 通过 GetWindowPlacement
+					// 函数获取指定窗口（hwnd）的当前显示状态等信息，存储到 wp
+					// 结构体中
+					WINDOWPLACEMENT wp = {sizeof(WINDOWPLACEMENT)};
+					GetWindowPlacement(hwnd, &wp);
+					// 判断窗口当前是否处于最小化状态
+					if (wp.showCmd == SW_SHOWMINIMIZED) {
+						// 如果窗口处于最小化状态，则调用 ShowWindow
+						// 函数将窗口恢复到之前的显示状态
+						ShowWindow(hwnd, SW_RESTORE);
+						// 如果窗口不是最小化状态，则调用 ShowWindow
+						// 函数将窗口最小化
+					} else {
+						ShowWindow(hwnd, SW_MINIMIZE);
+					}
 				}
 			}
 		}
@@ -425,7 +452,8 @@ INT_PTR CALLBACK about(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	return (INT_PTR)FALSE;
 }
 
-BOOL dumpFile(const std::wstring& strPath, struct _EXCEPTION_POINTERS *exceptionInfo) {
+BOOL dumpFile(
+	const std::wstring &strPath, struct _EXCEPTION_POINTERS *exceptionInfo) {
 	HANDLE hFile = CreateFileW(strPath.c_str(), GENERIC_WRITE, 0, NULL,
 		CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
@@ -443,8 +471,8 @@ BOOL dumpFile(const std::wstring& strPath, struct _EXCEPTION_POINTERS *exception
 	m3.CallbackRoutine = NULL;
 	m3.CallbackParam = NULL;
 
-	BOOL dumpResult = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile,
-		MiniDumpNormal, &m1, &m2, &m3);
+	BOOL dumpResult = MiniDumpWriteDump(GetCurrentProcess(),
+		GetCurrentProcessId(), hFile, MiniDumpNormal, &m1, &m2, &m3);
 	CloseHandle(hFile);
 	return dumpResult;
 }
@@ -454,8 +482,8 @@ LONG WINAPI exceptionFilter(struct _EXCEPTION_POINTERS *exceptionInfo) {
 	auto *exceptionAddress = exceptionInfo->ExceptionRecord->ExceptionAddress;
 
 	std::wstring msg = L"未处理的异常，错误代码是 " +
-					   std::to_wstring(exceptionCode) + L"，异常地址是 " +
-					   std::to_wstring(reinterpret_cast<uintptr_t>(exceptionAddress));
+		std::to_wstring(exceptionCode) + L"，异常地址是 " +
+		std::to_wstring(reinterpret_cast<uintptr_t>(exceptionAddress));
 	MessageBoxW(NULL, msg.c_str(), L"程序异常", MB_OK | MB_ICONERROR);
 
 	wchar_t path[MAX_PATH] = {0};
