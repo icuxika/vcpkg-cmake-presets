@@ -43,6 +43,9 @@
     },
     {
       "name": "lodepng"
+    },
+    {
+      "name": "opencv"
     }
   ],
   "overrides": [
@@ -81,6 +84,10 @@
     {
       "name": "openal-soft",
       "version": "1.24.1"
+    },
+    {
+      "name": "opencv",
+      "version": "4.10.0"
     }
   ],
   "builtin-baseline": "cd124b84feb0c02a24a2d90981e8358fdee0e077"
